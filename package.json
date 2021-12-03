@@ -1,0 +1,20 @@
+{
+  "name": "ytdownload",
+  "version": "1.0.0",
+  "description": "A web application that uses youtube_dl to download mp4 and mp3 files from YouTube.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@ssh.stevensu.dev:lakewood999/ytdownloader.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-preset-react-app": "^3.1.2"
+  }
+}

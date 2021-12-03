@@ -2,3 +2,5 @@ redis/redis-stable/*
 redis/redis-stable.tar.gz
 tmp/*
 .venv/*
+node_modules/*
+__pycache__/*
