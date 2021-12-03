@@ -4,11 +4,15 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-youtube-dl = "*"
-flask = "*"
+youtube_dl = "*"
+Flask = "*"
 gunicorn = "*"
+redis = "*"
 
 [dev-packages]
 
 [requires]
 python_version = "3.8"
+
+[packages.celery]
+extras = [ "redis",]
