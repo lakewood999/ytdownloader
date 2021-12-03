@@ -1,3 +1,4 @@
 redis/redis-stable/*
 redis/redis-stable.tar.gz
 tmp/*
+.venv/*
