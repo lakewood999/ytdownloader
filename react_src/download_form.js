@@ -5,14 +5,14 @@ const e = React.createElement;
 class DownloadForm extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {downloading: false, text: "", url: ""};
+    this.state = { downloading: false, text: "", url: "abv" };
 
     this.handleURLChange = this.handleURLChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
   }
 
   handleURLChange(event) {
-    this.setState({value: event.target.value})
+    this.setState({ url: event.target.value })
   }
 
   handleSubmit(event) {
@@ -21,25 +21,25 @@ class DownloadForm extends React.Component {
   }
 
   makeRequest() {
-    this.setState({downloading: true})
+    this.setState({ downloading: true })
     fetch('/api/request', {
       method: "POST",
       mode: "cors",
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({"url":this.state.url}),
+      body: JSON.stringify({ "url": this.state.url }),
     }).then(response => response.json())
-      .then(data=>{
+      .then(data => {
         console.log(data);
-        this.setState({text: data.info, downloading: false})
+        this.setState({ text: data.info, downloading: false })
       });
   }
 
   render() {
-    var downloadBox =<p></p>;
+    var downloadBox = <p></p>;
     if (this.state.downloading) {
-      downloadBox = <p>Downloading</p>;
+      downloadBox = <p>Downloading...</p>;
     } else if (!this.state.downloading && this.state.text !== "") {
       downloadBox = <p>Resp: {this.state.text}</p>;
     }
@@ -47,16 +47,16 @@ class DownloadForm extends React.Component {
     return (
       <form onSubmit={this.handleSubmit}>
         <div className="field has-addons">
-            <div className="control is-expanded">
-                <input className="input" disabled={this.state.downloading} type="text" placeholder="Video URL" onChange={this.handleURLChange} value={this.state.url} />
-            </div>
-            <div className="control">
-                <button className="button is-info">
-                    Download
-                </button>
-            </div>
+          <div className="control is-expanded">
+            <input className="input" disabled={this.state.downloading} type="text" placeholder="Video URL" onChange={this.handleURLChange} />
           </div>
-          {downloadBox}   
+          <div className="control">
+            <button disabled={this.state.downloading} className="button is-info">
+              Download
+            </button>
+          </div>
+        </div>
+        {downloadBox}
       </form>
     );
   }

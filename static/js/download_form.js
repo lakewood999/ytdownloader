@@ -18,7 +18,7 @@ var DownloadForm = function (_React$Component) {
 
     var _this = _possibleConstructorReturn(this, (DownloadForm.__proto__ || Object.getPrototypeOf(DownloadForm)).call(this, props));
 
-    _this.state = { downloading: false, text: "", url: "" };
+    _this.state = { downloading: false, text: "", url: "abv" };
 
     _this.handleURLChange = _this.handleURLChange.bind(_this);
     _this.handleSubmit = _this.handleSubmit.bind(_this);
@@ -28,7 +28,7 @@ var DownloadForm = function (_React$Component) {
   _createClass(DownloadForm, [{
     key: "handleURLChange",
     value: function handleURLChange(event) {
-      this.setState({ value: event.target.value });
+      this.setState({ url: event.target.value });
     }
   }, {
     key: "handleSubmit",
@@ -64,7 +64,7 @@ var DownloadForm = function (_React$Component) {
         downloadBox = React.createElement(
           "p",
           null,
-          "Downloading"
+          "Downloading..."
         );
       } else if (!this.state.downloading && this.state.text !== "") {
         downloadBox = React.createElement(
@@ -84,14 +84,14 @@ var DownloadForm = function (_React$Component) {
           React.createElement(
             "div",
             { className: "control is-expanded" },
-            React.createElement("input", { className: "input", disabled: this.state.downloading, type: "text", placeholder: "Video URL", onChange: this.handleURLChange, value: this.state.url })
+            React.createElement("input", { className: "input", disabled: this.state.downloading, type: "text", placeholder: "Video URL", onChange: this.handleURLChange })
           ),
           React.createElement(
             "div",
             { className: "control" },
             React.createElement(
               "button",
-              { className: "button is-info" },
+              { disabled: this.state.downloading, className: "button is-info" },
               "Download"
             )
           )
