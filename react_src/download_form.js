@@ -5,9 +5,14 @@ const e = React.createElement;
 class DownloadForm extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { downloading: false, text: "" };
+    this.state = {downloading: false, text: "", url: ""};
 
+    this.handleURLChange = this.handleURLChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
+  }
+
+  handleURLChange(event) {
+    this.setState({value: event.target.value})
   }
 
   handleSubmit(event) {
@@ -17,8 +22,14 @@ class DownloadForm extends React.Component {
 
   makeRequest() {
     this.setState({downloading: true})
-    fetch('/api/request')
-      .then(response => response.json())
+    fetch('/api/request', {
+      method: "POST",
+      mode: "cors",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({"url":this.state.url}),
+    }).then(response => response.json())
       .then(data=>{
         console.log(data);
         this.setState({text: data.info, downloading: false})
@@ -35,12 +46,12 @@ class DownloadForm extends React.Component {
 
     return (
       <form onSubmit={this.handleSubmit}>
-        <div class="field has-addons">
-            <div class="control is-expanded">
-                <input class="input" type="text" placeholder="Video URL" />
+        <div className="field has-addons">
+            <div className="control is-expanded">
+                <input className="input" disabled={this.state.downloading} type="text" placeholder="Video URL" onChange={this.handleURLChange} value={this.state.url} />
             </div>
-            <div class="control">
-                <button class="button is-info">
+            <div className="control">
+                <button className="button is-info">
                     Download
                 </button>
             </div>

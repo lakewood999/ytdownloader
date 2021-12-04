@@ -18,25 +18,38 @@ var DownloadForm = function (_React$Component) {
 
     var _this = _possibleConstructorReturn(this, (DownloadForm.__proto__ || Object.getPrototypeOf(DownloadForm)).call(this, props));
 
-    _this.state = { downloading: false, text: "" };
+    _this.state = { downloading: false, text: "", url: "" };
 
+    _this.handleURLChange = _this.handleURLChange.bind(_this);
     _this.handleSubmit = _this.handleSubmit.bind(_this);
     return _this;
   }
 
   _createClass(DownloadForm, [{
-    key: 'handleSubmit',
+    key: "handleURLChange",
+    value: function handleURLChange(event) {
+      this.setState({ value: event.target.value });
+    }
+  }, {
+    key: "handleSubmit",
     value: function handleSubmit(event) {
       this.makeRequest();
       event.preventDefault();
     }
   }, {
-    key: 'makeRequest',
+    key: "makeRequest",
     value: function makeRequest() {
       var _this2 = this;
 
       this.setState({ downloading: true });
-      fetch('/api/request').then(function (response) {
+      fetch('/api/request', {
+        method: "POST",
+        mode: "cors",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ "url": this.state.url })
+      }).then(function (response) {
         return response.json();
       }).then(function (data) {
         console.log(data);
@@ -44,42 +57,42 @@ var DownloadForm = function (_React$Component) {
       });
     }
   }, {
-    key: 'render',
+    key: "render",
     value: function render() {
-      var downloadBox = React.createElement('p', null);
+      var downloadBox = React.createElement("p", null);
       if (this.state.downloading) {
         downloadBox = React.createElement(
-          'p',
+          "p",
           null,
-          'Downloading'
+          "Downloading"
         );
       } else if (!this.state.downloading && this.state.text !== "") {
         downloadBox = React.createElement(
-          'p',
+          "p",
           null,
-          'Resp: ',
+          "Resp: ",
           this.state.text
         );
       }
 
       return React.createElement(
-        'form',
+        "form",
         { onSubmit: this.handleSubmit },
         React.createElement(
-          'div',
-          { 'class': 'field has-addons' },
+          "div",
+          { className: "field has-addons" },
           React.createElement(
-            'div',
-            { 'class': 'control is-expanded' },
-            React.createElement('input', { 'class': 'input', type: 'text', placeholder: 'Video URL' })
+            "div",
+            { className: "control is-expanded" },
+            React.createElement("input", { className: "input", disabled: this.state.downloading, type: "text", placeholder: "Video URL", onChange: this.handleURLChange, value: this.state.url })
           ),
           React.createElement(
-            'div',
-            { 'class': 'control' },
+            "div",
+            { className: "control" },
             React.createElement(
-              'button',
-              { 'class': 'button is-info' },
-              'Download'
+              "button",
+              { className: "button is-info" },
+              "Download"
             )
           )
         ),
