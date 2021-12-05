@@ -5,12 +5,13 @@ const e = React.createElement;
 class DownloadForm extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { downloading: false, text: "", url: "abv", interval: null, jobid: "", state: 0 };
+    this.state = { downloading: false, url: "abv", interval: null, jobid: "", state: 0 };
 
     this.handleURLChange = this.handleURLChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
     this.makeRequest = this.makeRequest.bind(this);
     this.checkStatus = this.checkStatus.bind(this);
+    this.restart = this.restart.bind(this);
   }
 
   handleURLChange(event) {
@@ -20,6 +21,10 @@ class DownloadForm extends React.Component {
   handleSubmit(event) {
     this.makeRequest();
     event.preventDefault();
+  }
+
+  restart() {
+    this.setState({ downloading: false, url: "", interval: null, jobid: "", state: 0 })
   }
 
   makeRequest() {
@@ -34,7 +39,7 @@ class DownloadForm extends React.Component {
     }).then(response => response.json())
       .then(data => {
         console.log(data);
-        this.setState({ state: 1, downloading: true, interval: setInterval(this.checkStatus, 500), jobid: data.id, percent: "" })
+        this.setState({ state: 1, downloading: true, interval: setInterval(this.checkStatus, 500), jobid: data.id, percent: " 0%" })
       });
   }
 
@@ -60,6 +65,8 @@ class DownloadForm extends React.Component {
           this.setState({ state: 3 })
         } else if ((data.state === "done" && this.state.state !== 4)) {
           this.setState({ state: 4, interval: clearInterval(this.state.interval), percent: " 100%" })
+        } else if (data.state === "error") {
+          this.setState({ state: -1, interval: null })
         }
       });
   }
@@ -71,6 +78,7 @@ class DownloadForm extends React.Component {
     var stepOneText, stepTwoText, stepThreeText, stepFourText;
     stepOneText = stepTwoText = stepThreeText = stepFourText = "";
     var downloadButton = null;
+    var message = "";
     if (this.state.downloading) {
       if (this.state.state === 0) {
         stepOneClass = "has-text-info";
@@ -80,7 +88,7 @@ class DownloadForm extends React.Component {
         stepOneText = <i className="fas fa-check"></i>;
       }
 
-      if (this.state.state === 2) {
+      if (this.state.state === 2 || this.state.state === 1) {
         stepTwoClass = "has-text-info";
         stepTwoText = <span><i className="fas fa-sync fa-spin"></i> {this.state.percent}</span>;
       } else if (this.state.state >= 3) {
@@ -99,24 +107,35 @@ class DownloadForm extends React.Component {
       if (this.state.state === 4) {
         stepFourClass = "has-text-success";
         stepFourText = <i className="fas fa-check"></i>;
-        downloadButton = <a className="button is-info" download href={"/api/job/download/" + this.state.jobid}>Download</a>;
+        downloadButton = <div className="container">
+          <a className="button is-info" download href={"/api/job/download/" + this.state.jobid}>Download</a> <input className="button is-info" value="Reset" type="reset" />
+        </div>;
+      }
+
+      if (this.state.state === -1) {
+        stepOneClass = stepTwoClass = stepThreeClass = stepFourClass = "has-text-danger";
+        message = <span><b>Message: </b>An error has occurred. Please check URL or contact an administrator!</span>;
+        downloadButton = <div className="container">
+          <input className="button is-info" value="Reset" type="reset" />
+        </div>;
       }
     }
 
     if (this.state.downloading) {
       downloadBox = <div className="">
-        <p>
+        <div className="container">
           <span className={stepOneClass}><b>Step 1: </b> Queue download request {stepOneText}</span><br />
           <span className={stepTwoClass}><b>Step 2: </b> Video downloading {stepTwoText}</span><br />
           <span className={stepThreeClass}><b>Step 3: </b> Post-processing and conversion {stepThreeText}</span><br />
           <span className={stepFourClass}><b>Step 4: </b> Ready to download {stepFourText}</span><br />
-          {downloadButton}
-        </p>
+          <span className={stepOneClass}>{ message }</span>
+        </div>
+        {downloadButton}
       </div>;
     }
 
     return (
-      <form onSubmit={this.handleSubmit}>
+      <form onSubmit={this.handleSubmit} onReset={this.restart}>
         <div className="field has-addons">
           <div className="control is-expanded">
             <input className="input" disabled={this.state.downloading} type="text" placeholder="Video URL" onChange={this.handleURLChange} />

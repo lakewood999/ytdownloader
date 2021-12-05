@@ -29,10 +29,12 @@ def download_req():
     if "url" not in req_body:
         return jsonify({"message": "Error: URL not provided!"})
     req_url = req_body["url"]
-    download_request.delay(req_url)
+    job_id = md5(req_url.encode('ascii')).hexdigest()
+    if not redis.exists(job_id):
+        download_request.delay(req_url)
     return jsonify({
         "state": "success",
-        "id": md5(req_url.encode('ascii')).hexdigest()
+        "id": job_id
     })
 
 
@@ -44,9 +46,9 @@ def download_status():
         return jsonify({"message": "Error: invalid request. Missing job ID."})
     job_id = req_body['id']
     # get status from redis
-    status = redis.hmget(job_id, ["state", "eta", "percent"])
-    if None in status:
+    if not redis.exists(job_id):
         return jsonify({"message": "Error: ID not found."})
+    status = redis.hmget(job_id, ["state", "eta", "percent"])
     # format and send results
     return jsonify({"state": status[0].decode('utf-8'), "percent": status[2].decode('utf-8')})
 
@@ -59,6 +61,8 @@ def download_file(job_id):
         files = listdir(app.root_path+"/tmp/"+job_id+"/")
         if len(files) == 0:
             abort(404)
+        if redis.exists(job_id):
+            redis.delete(job_id)
         return send_from_directory(app.root_path+"/tmp/"+job_id,files[0],as_attachment=True,cache_timeout=0)
     abort(400)
 

@@ -18,12 +18,13 @@ var DownloadForm = function (_React$Component) {
 
     var _this = _possibleConstructorReturn(this, (DownloadForm.__proto__ || Object.getPrototypeOf(DownloadForm)).call(this, props));
 
-    _this.state = { downloading: false, text: "", url: "abv", interval: null, jobid: "", state: 0 };
+    _this.state = { downloading: false, url: "abv", interval: null, jobid: "", state: 0 };
 
     _this.handleURLChange = _this.handleURLChange.bind(_this);
     _this.handleSubmit = _this.handleSubmit.bind(_this);
     _this.makeRequest = _this.makeRequest.bind(_this);
     _this.checkStatus = _this.checkStatus.bind(_this);
+    _this.restart = _this.restart.bind(_this);
     return _this;
   }
 
@@ -37,6 +38,11 @@ var DownloadForm = function (_React$Component) {
     value: function handleSubmit(event) {
       this.makeRequest();
       event.preventDefault();
+    }
+  }, {
+    key: "restart",
+    value: function restart() {
+      this.setState({ downloading: false, url: "", interval: null, jobid: "", state: 0 });
     }
   }, {
     key: "makeRequest",
@@ -55,7 +61,7 @@ var DownloadForm = function (_React$Component) {
         return response.json();
       }).then(function (data) {
         console.log(data);
-        _this2.setState({ state: 1, downloading: true, interval: setInterval(_this2.checkStatus, 500), jobid: data.id, percent: "" });
+        _this2.setState({ state: 1, downloading: true, interval: setInterval(_this2.checkStatus, 500), jobid: data.id, percent: " 0%" });
       });
     }
   }, {
@@ -85,6 +91,8 @@ var DownloadForm = function (_React$Component) {
           _this3.setState({ state: 3 });
         } else if (data.state === "done" && _this3.state.state !== 4) {
           _this3.setState({ state: 4, interval: clearInterval(_this3.state.interval), percent: " 100%" });
+        } else if (data.state === "error") {
+          _this3.setState({ state: -1, interval: null });
         }
       });
     }
@@ -97,6 +105,7 @@ var DownloadForm = function (_React$Component) {
       var stepOneText, stepTwoText, stepThreeText, stepFourText;
       stepOneText = stepTwoText = stepThreeText = stepFourText = "";
       var downloadButton = null;
+      var message = "";
       if (this.state.downloading) {
         if (this.state.state === 0) {
           stepOneClass = "has-text-info";
@@ -106,7 +115,7 @@ var DownloadForm = function (_React$Component) {
           stepOneText = React.createElement("i", { className: "fas fa-check" });
         }
 
-        if (this.state.state === 2) {
+        if (this.state.state === 2 || this.state.state === 1) {
           stepTwoClass = "has-text-info";
           stepTwoText = React.createElement(
             "span",
@@ -132,9 +141,34 @@ var DownloadForm = function (_React$Component) {
           stepFourClass = "has-text-success";
           stepFourText = React.createElement("i", { className: "fas fa-check" });
           downloadButton = React.createElement(
-            "a",
-            { className: "button is-info", download: true, href: "/api/job/download/" + this.state.jobid },
-            "Download"
+            "div",
+            { className: "container" },
+            React.createElement(
+              "a",
+              { className: "button is-info", download: true, href: "/api/job/download/" + this.state.jobid },
+              "Download"
+            ),
+            " ",
+            React.createElement("input", { className: "button is-info", value: "Reset", type: "reset" })
+          );
+        }
+
+        if (this.state.state === -1) {
+          stepOneClass = stepTwoClass = stepThreeClass = stepFourClass = "has-text-danger";
+          message = React.createElement(
+            "span",
+            null,
+            React.createElement(
+              "b",
+              null,
+              "Message: "
+            ),
+            "An error has occurred. Please check URL or contact an administrator!"
+          );
+          downloadButton = React.createElement(
+            "div",
+            { className: "container" },
+            React.createElement("input", { className: "button is-info", value: "Reset", type: "reset" })
           );
         }
       }
@@ -144,8 +178,8 @@ var DownloadForm = function (_React$Component) {
           "div",
           { className: "" },
           React.createElement(
-            "p",
-            null,
+            "div",
+            { className: "container" },
             React.createElement(
               "span",
               { className: stepOneClass },
@@ -194,14 +228,19 @@ var DownloadForm = function (_React$Component) {
               stepFourText
             ),
             React.createElement("br", null),
-            downloadButton
-          )
+            React.createElement(
+              "span",
+              { className: stepOneClass },
+              message
+            )
+          ),
+          downloadButton
         );
       }
 
       return React.createElement(
         "form",
-        { onSubmit: this.handleSubmit },
+        { onSubmit: this.handleSubmit, onReset: this.restart },
         React.createElement(
           "div",
           { className: "field has-addons" },

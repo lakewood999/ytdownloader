@@ -32,18 +32,15 @@ def progress_hook(d):
     Hook to process data from download callbacks during download 
     """
     video_id = d['filename'].split("/")[1]
-    print(video_id)
     if d['status'] == "downloading":
         if 'eta' not in d or '_percent_str' not in d:
             return
-        print(d)
         redis.hmset(
             video_id, {
                 "eta": d["_eta_str"],
                 "percent": d["_percent_str"].strip(),
                 "state": "downloading"
             })
-        print(video_id, redis.hmget(video_id, ["eta", "percent"]))
     elif d['status'] == 'finished':
         redis.hmset(video_id, {
             "eta": "0",
@@ -65,16 +62,13 @@ def post_hook(d):
             "percent": "unknown",
             "state": "processing"
         })
-        print("starting processing")
     elif d['status'] == "finished":
         video_id = d['info_dict']['_filename'].split("/")[1]
-        print(video_id)
         redis.hmset(video_id, {
             "eta": "unknown",
             "percent": "unknown",
             "state": "done"
         })
-        print("done processing")
 
 
 # config for youtube download
@@ -111,5 +105,13 @@ def download_request(url):
     # adjust config for
     job_id = md5(url.encode('ascii')).hexdigest()
     ydl_opts["paths"]["home"] = "tmp/" + job_id
-    with ytdl.YoutubeDL(ydl_opts) as ydl:
-        ydl.download([url])
+    try:
+        with ytdl.YoutubeDL(ydl_opts) as ydl:
+            ydl.download([url])
+    except Exception as e:
+        redis.hmset(job_id, {
+            "state": "error",
+            "eta":"",
+            "percent":""
+        })
+        return
