@@ -18,7 +18,7 @@ var DownloadForm = function (_React$Component) {
 
     var _this = _possibleConstructorReturn(this, (DownloadForm.__proto__ || Object.getPrototypeOf(DownloadForm)).call(this, props));
 
-    _this.state = { downloading: false, url: "abv", interval: null, jobid: "", state: 0 };
+    _this.state = { downloading: false, url: "", interval: null, jobid: "", state: 0 };
 
     _this.handleURLChange = _this.handleURLChange.bind(_this);
     _this.handleSubmit = _this.handleSubmit.bind(_this);
@@ -60,7 +60,6 @@ var DownloadForm = function (_React$Component) {
       }).then(function (response) {
         return response.json();
       }).then(function (data) {
-        console.log(data);
         _this2.setState({ state: 1, downloading: true, interval: setInterval(_this2.checkStatus, 500), jobid: data.id, percent: " 0%" });
       });
     }
@@ -82,7 +81,6 @@ var DownloadForm = function (_React$Component) {
       }).then(function (response) {
         return response.json();
       }).then(function (data) {
-        console.log(data);
         if (data.state === "downloading" && _this3.state.state !== 2) {
           _this3.setState({ state: 2, percent: data.percent });
         } else if (data.state === "downloading" && _this3.state.state === 2) {
@@ -247,7 +245,7 @@ var DownloadForm = function (_React$Component) {
           React.createElement(
             "div",
             { className: "control is-expanded" },
-            React.createElement("input", { className: "input", disabled: this.state.downloading, type: "text", placeholder: "Video URL", onChange: this.handleURLChange })
+            React.createElement("input", { className: "input", disabled: this.state.downloading, type: "text", placeholder: "Video URL", onChange: this.handleURLChange, value: this.state.url })
           ),
           React.createElement(
             "div",

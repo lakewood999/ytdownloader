@@ -30,7 +30,7 @@ def download_req():
         return jsonify({"message": "Error: URL not provided!"})
     req_url = req_body["url"]
     job_id = md5(req_url.encode('ascii')).hexdigest()
-    if not redis.exists(job_id):
+    if not redis.exists(job_id) and redis.hmget(job_id, ["state"])[0] != "done":
         download_request.delay(req_url)
     return jsonify({
         "state": "success",

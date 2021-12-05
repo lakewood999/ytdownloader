@@ -5,7 +5,7 @@ const e = React.createElement;
 class DownloadForm extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { downloading: false, url: "abv", interval: null, jobid: "", state: 0 };
+    this.state = { downloading: false, url: "", interval: null, jobid: "", state: 0 };
 
     this.handleURLChange = this.handleURLChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
@@ -38,7 +38,6 @@ class DownloadForm extends React.Component {
       body: JSON.stringify({ "url": this.state.url }),
     }).then(response => response.json())
       .then(data => {
-        console.log(data);
         this.setState({ state: 1, downloading: true, interval: setInterval(this.checkStatus, 500), jobid: data.id, percent: " 0%" })
       });
   }
@@ -56,7 +55,6 @@ class DownloadForm extends React.Component {
       body: JSON.stringify({ "id": this.state.jobid }),
     }).then(response => response.json())
       .then(data => {
-        console.log(data);
         if (data.state === "downloading" && this.state.state !== 2) {
           this.setState({ state: 2, percent: data.percent })
         } else if (data.state === "downloading" && this.state.state === 2) {
@@ -138,7 +136,7 @@ class DownloadForm extends React.Component {
       <form onSubmit={this.handleSubmit} onReset={this.restart}>
         <div className="field has-addons">
           <div className="control is-expanded">
-            <input className="input" disabled={this.state.downloading} type="text" placeholder="Video URL" onChange={this.handleURLChange} />
+            <input className="input" disabled={this.state.downloading} type="text" placeholder="Video URL" onChange={this.handleURLChange} value={this.state.url}/>
           </div>
           <div className="control">
             <button disabled={this.state.downloading} className="button is-info">
