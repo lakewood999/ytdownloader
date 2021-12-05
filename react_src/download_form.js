@@ -32,16 +32,33 @@ class DownloadForm extends React.Component {
     }).then(response => response.json())
       .then(data => {
         console.log(data);
-        this.setState({ text: data.info, downloading: false })
+        this.setState({ text: data.info, downloading: true })
       });
   }
 
   render() {
     var downloadBox = <p></p>;
-    if (this.state.downloading) {
-      downloadBox = <p>Downloading...</p>;
-    } else if (!this.state.downloading && this.state.text !== "") {
-      downloadBox = <p>Resp: {this.state.text}</p>;
+    var stepOneClass, stepTwoClass, stepThreeClass, stepFourClass;
+    stepOneClass = stepTwoClass = stepThreeClass = stepFourClass = "grey-lighter";
+    var stepOneText, stepTwoText, stepThreeText, stepFourText;
+    stepOneText = stepTwoText = stepThreeText = stepFourText = "";
+    if (this.state.downloading && this.state.text === "") {
+      stepOneClass = "has-text-info";
+      stepOneText = <i className="fas fa-sync fa-spin"></i>;
+    }
+    if (this.state.downloading && this.state.text !== "") {
+      stepOneClass = "has-text-success";
+      stepOneText = <i className="fas fa-check"></i>;
+    }
+    if (this.state.downloading || this.state.text==="success") {
+      downloadBox = <div className="">
+        <p>
+          <span className={stepOneClass}><b>Step 1: </b> Queue download request {stepOneText}</span><br/>
+          <span className={stepTwoClass}><b>Step 2: </b> Video downloading {stepTwoText}</span><br/>
+          <span className={stepThreeClass}><b>Step 3: </b> Post-processing and conversion {stepThreeText}</span><br/>
+          <span className={stepFourClass}><b>Step 4: </b> Ready to download {stepFourText}</span>
+        </p>
+      </div>;
     }
 
     return (

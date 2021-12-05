@@ -53,25 +53,80 @@ var DownloadForm = function (_React$Component) {
         return response.json();
       }).then(function (data) {
         console.log(data);
-        _this2.setState({ text: data.info, downloading: false });
+        _this2.setState({ text: data.info, downloading: true });
       });
     }
   }, {
     key: "render",
     value: function render() {
       var downloadBox = React.createElement("p", null);
-      if (this.state.downloading) {
+      var stepOneClass, stepTwoClass, stepThreeClass, stepFourClass;
+      stepOneClass = stepTwoClass = stepThreeClass = stepFourClass = "grey-lighter";
+      var stepOneText, stepTwoText, stepThreeText, stepFourText;
+      stepOneText = stepTwoText = stepThreeText = stepFourText = "";
+      if (this.state.downloading && this.state.text === "") {
+        stepOneClass = "has-text-info";
+        stepOneText = React.createElement("i", { className: "fas fa-sync fa-spin" });
+      }
+      if (this.state.downloading && this.state.text !== "") {
+        stepOneClass = "has-text-success";
+        stepOneText = React.createElement("i", { className: "fas fa-check" });
+      }
+      if (this.state.downloading || this.state.text === "success") {
         downloadBox = React.createElement(
-          "p",
-          null,
-          "Downloading..."
-        );
-      } else if (!this.state.downloading && this.state.text !== "") {
-        downloadBox = React.createElement(
-          "p",
-          null,
-          "Resp: ",
-          this.state.text
+          "div",
+          { className: "" },
+          React.createElement(
+            "p",
+            null,
+            React.createElement(
+              "span",
+              { className: stepOneClass },
+              React.createElement(
+                "b",
+                null,
+                "Step 1: "
+              ),
+              " Queue download request ",
+              stepOneText
+            ),
+            React.createElement("br", null),
+            React.createElement(
+              "span",
+              { className: stepTwoClass },
+              React.createElement(
+                "b",
+                null,
+                "Step 2: "
+              ),
+              " Video downloading ",
+              stepTwoText
+            ),
+            React.createElement("br", null),
+            React.createElement(
+              "span",
+              { className: stepThreeClass },
+              React.createElement(
+                "b",
+                null,
+                "Step 3: "
+              ),
+              " Post-processing and conversion ",
+              stepThreeText
+            ),
+            React.createElement("br", null),
+            React.createElement(
+              "span",
+              { className: stepFourClass },
+              React.createElement(
+                "b",
+                null,
+                "Step 4: "
+              ),
+              " Ready to download ",
+              stepFourText
+            )
+          )
         );
       }
 

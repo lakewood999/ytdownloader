@@ -14,7 +14,8 @@ def download_req():
     req_body = request.get_json()
     req_url = req_body["url"]
     time.sleep(3)
-    return jsonify({"info": "received " + req_url})
+    # initial step complete
+    return jsonify({"state": "success"})
 
 
 if __name__ == "__main__":
