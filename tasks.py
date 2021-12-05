@@ -3,7 +3,6 @@ import yt_dlp as ytdl
 
 from celery import Celery
 import redis
-from os import listdir
 
 from hashlib import md5
 
@@ -35,9 +34,12 @@ def progress_hook(d):
     video_id = d['filename'].split("/")[1]
     print(video_id)
     if d['status'] == "downloading":
+        if 'eta' not in d or '_percent_str' not in d:
+            return
+        print(d)
         redis.hmset(
             video_id, {
-                "eta": d["eta"],
+                "eta": d["_eta_str"],
                 "percent": d["_percent_str"].strip(),
                 "state": "downloading"
             })
@@ -46,7 +48,7 @@ def progress_hook(d):
         redis.hmset(video_id, {
             "eta": "0",
             "percent": "100%",
-            "state": "downloading"
+            "state": "processing"
         })
         print('Done downloading, now converting ...')
 
