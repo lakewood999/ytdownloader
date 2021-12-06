@@ -10,22 +10,45 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 var e = React.createElement;
 
-var DownloadForm = function (_React$Component) {
-  _inherits(DownloadForm, _React$Component);
+var Test = function (_React$Component) {
+  _inherits(Test, _React$Component);
+
+  function Test() {
+    _classCallCheck(this, Test);
+
+    return _possibleConstructorReturn(this, (Test.__proto__ || Object.getPrototypeOf(Test)).apply(this, arguments));
+  }
+
+  _createClass(Test, [{
+    key: "render",
+    value: function render() {
+      return React.createElement(
+        "p",
+        null,
+        "Hello!"
+      );
+    }
+  }]);
+
+  return Test;
+}(React.Component);
+
+var DownloadForm = function (_React$Component2) {
+  _inherits(DownloadForm, _React$Component2);
 
   function DownloadForm(props) {
     _classCallCheck(this, DownloadForm);
 
-    var _this = _possibleConstructorReturn(this, (DownloadForm.__proto__ || Object.getPrototypeOf(DownloadForm)).call(this, props));
+    var _this2 = _possibleConstructorReturn(this, (DownloadForm.__proto__ || Object.getPrototypeOf(DownloadForm)).call(this, props));
 
-    _this.state = { downloading: false, url: "", interval: null, jobid: "", state: 0 };
+    _this2.state = { downloading: false, url: "", interval: null, jobid: "", state: 0 };
 
-    _this.handleURLChange = _this.handleURLChange.bind(_this);
-    _this.handleSubmit = _this.handleSubmit.bind(_this);
-    _this.makeRequest = _this.makeRequest.bind(_this);
-    _this.checkStatus = _this.checkStatus.bind(_this);
-    _this.restart = _this.restart.bind(_this);
-    return _this;
+    _this2.handleURLChange = _this2.handleURLChange.bind(_this2);
+    _this2.handleSubmit = _this2.handleSubmit.bind(_this2);
+    _this2.makeRequest = _this2.makeRequest.bind(_this2);
+    _this2.checkStatus = _this2.checkStatus.bind(_this2);
+    _this2.restart = _this2.restart.bind(_this2);
+    return _this2;
   }
 
   _createClass(DownloadForm, [{
@@ -47,7 +70,7 @@ var DownloadForm = function (_React$Component) {
   }, {
     key: "makeRequest",
     value: function makeRequest() {
-      var _this2 = this;
+      var _this3 = this;
 
       this.setState({ downloading: true });
       fetch('/api/job/request', {
@@ -60,13 +83,13 @@ var DownloadForm = function (_React$Component) {
       }).then(function (response) {
         return response.json();
       }).then(function (data) {
-        _this2.setState({ state: 1, downloading: true, interval: setInterval(_this2.checkStatus, 500), jobid: data.id, percent: " 0%" });
+        _this3.setState({ state: 1, downloading: true, interval: setInterval(_this3.checkStatus, 500), jobid: data.id, percent: " 0%" });
       });
     }
   }, {
     key: "checkStatus",
     value: function checkStatus() {
-      var _this3 = this;
+      var _this4 = this;
 
       if (this.state.jobid === null) {
         return;
@@ -81,16 +104,16 @@ var DownloadForm = function (_React$Component) {
       }).then(function (response) {
         return response.json();
       }).then(function (data) {
-        if (data.state === "downloading" && _this3.state.state !== 2) {
-          _this3.setState({ state: 2, percent: data.percent });
-        } else if (data.state === "downloading" && _this3.state.state === 2) {
-          _this3.setState({ percent: data.percent });
-        } else if (data.state === "processing" && _this3.state.state !== 3) {
-          _this3.setState({ state: 3 });
-        } else if (data.state === "done" && _this3.state.state !== 4) {
-          _this3.setState({ state: 4, interval: clearInterval(_this3.state.interval), percent: " 100%" });
+        if (data.state === "downloading" && _this4.state.state !== 2) {
+          _this4.setState({ state: 2, percent: data.percent });
+        } else if (data.state === "downloading" && _this4.state.state === 2) {
+          _this4.setState({ percent: data.percent });
+        } else if (data.state === "processing" && _this4.state.state !== 3) {
+          _this4.setState({ state: 3 });
+        } else if (data.state === "done" && _this4.state.state !== 4) {
+          _this4.setState({ state: 4, interval: clearInterval(_this4.state.interval), percent: " 100%" });
         } else if (data.state === "error") {
-          _this3.setState({ state: -1, interval: null });
+          _this4.setState({ state: -1, interval: null });
         }
       });
     }
@@ -257,7 +280,8 @@ var DownloadForm = function (_React$Component) {
             )
           )
         ),
-        downloadBox
+        downloadBox,
+        React.createElement(Test, null)
       );
     }
   }]);

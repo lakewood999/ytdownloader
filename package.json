@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "A web application that uses youtube_dl to download mp4 and mp3 files from YouTube.",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },

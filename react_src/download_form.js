@@ -1,6 +1,11 @@
 'use strict';
-
 const e = React.createElement;
+
+class Test extends React.Component {
+  render() {
+      return <p>Hello!</p>;
+  }
+}
 
 class DownloadForm extends React.Component {
   constructor(props) {
@@ -145,6 +150,7 @@ class DownloadForm extends React.Component {
           </div>
         </div>
         {downloadBox}
+        <Test />
       </form>
     );
   }
