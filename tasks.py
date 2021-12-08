@@ -73,25 +73,21 @@ def post_hook(d):
 
 # config for youtube download
 ydl_opts = {
-    'format':
-    'bestaudio/best',
-    'postprocessors': [{
-        'key': 'FFmpegExtractAudio',
-        'when': 'post_process',
-        'preferredcodec': 'mp3',
-        'preferredquality': '192',
-    }],
-    'logger':
-    MyLogger(),
+    'format': 'bestaudio/best',
+    #'postprocessors': [{
+    #    'key': 'FFmpegExtractAudio',
+    #    'when': 'post_process',
+    #    'preferredcodec': 'mp3',
+    #    'preferredquality': '192',
+    #}],
+    'logger': MyLogger(),
     'progress_hooks': [progress_hook],
     'postprocessor_hooks': [post_hook],
-    'outtmpl':
-    "%(title)s-%(id)s.%(ext)s",
+    'outtmpl': "%(title)s-%(id)s.%(ext)s",
     'paths': {
         'home': 'tmp/'
     },
-    "verbose":
-    True,
+    "verbose": True,
 }
 
 # test url: https://www.youtube.com/watch?v=BaW_jenozKc
@@ -108,10 +104,6 @@ def download_request(url):
     try:
         with ytdl.YoutubeDL(ydl_opts) as ydl:
             ydl.download([url])
-    except Exception as e:
-        redis.hmset(job_id, {
-            "state": "error",
-            "eta":"",
-            "percent":""
-        })
+    except Exception:
+        redis.hmset(job_id, {"state": "error", "eta": "", "percent": ""})
         return
