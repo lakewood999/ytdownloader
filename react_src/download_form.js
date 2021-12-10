@@ -3,7 +3,7 @@ const e = React.createElement;
 
 class Test extends React.Component {
   render() {
-      return <p>Hello!</p>;
+    return <p>Hello!</p>;
   }
 }
 
@@ -131,7 +131,7 @@ class DownloadForm extends React.Component {
           <span className={stepTwoClass}><b>Step 2: </b> Video downloading {stepTwoText}</span><br />
           <span className={stepThreeClass}><b>Step 3: </b> Post-processing and conversion {stepThreeText}</span><br />
           <span className={stepFourClass}><b>Step 4: </b> Ready to download {stepFourText}</span><br />
-          <span className={stepOneClass}>{ message }</span>
+          <span className={stepOneClass}>{message}</span>
         </div>
         {downloadButton}
       </div>;
@@ -141,7 +141,7 @@ class DownloadForm extends React.Component {
       <form onSubmit={this.handleSubmit} onReset={this.restart}>
         <div className="field has-addons">
           <div className="control is-expanded">
-            <input className="input" disabled={this.state.downloading} type="text" placeholder="Video URL" onChange={this.handleURLChange} value={this.state.url}/>
+            <input className="input" disabled={this.state.downloading} type="text" placeholder="Video URL" onChange={this.handleURLChange} value={this.state.url} />
           </div>
           <div className="control">
             <button disabled={this.state.downloading} className="button is-info">

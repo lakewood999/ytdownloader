@@ -11,12 +11,14 @@ app = Flask(__name__)
 # initialize redis connection
 redis = redis.Redis(host='localhost', port='6379')
 
+
 # quick and dirty check, can be replaced by regex
 def check_id(id):
     for c in id.lower():
         if c not in string.digits + "abcdef":
             return False
     return True
+
 
 @app.route("/")
 def home():
@@ -30,12 +32,10 @@ def download_req():
         return jsonify({"message": "Error: URL not provided!"})
     req_url = req_body["url"]
     job_id = md5(req_url.encode('ascii')).hexdigest()
-    if not redis.exists(job_id) and redis.hmget(job_id, ["state"])[0] != "done":
+    if not redis.exists(job_id) and redis.hmget(job_id,
+                                                ["state"])[0] != "done":
         download_request.delay(req_url)
-    return jsonify({
-        "state": "success",
-        "id": job_id
-    })
+    return jsonify({"state": "success", "id": job_id})
 
 
 @app.route("/api/job/status", methods=["POST"])
@@ -50,21 +50,28 @@ def download_status():
         return jsonify({"message": "Error: ID not found."})
     status = redis.hmget(job_id, ["state", "eta", "percent"])
     # format and send results
-    return jsonify({"state": status[0].decode('utf-8'), "percent": status[2].decode('utf-8')})
+    return jsonify({
+        "state": status[0].decode('utf-8'),
+        "percent": status[2].decode('utf-8')
+    })
 
 
 @app.route("/api/job/download/<job_id>")
 def download_file(job_id):
     if len(job_id) == 32 and check_id(job_id):
-        if job_id not in listdir(app.root_path+"/tmp"):
+        if job_id not in listdir(app.root_path + "/tmp"):
             abort(404)
-        files = listdir(app.root_path+"/tmp/"+job_id+"/")
+        files = listdir(app.root_path + "/tmp/" + job_id + "/")
         if len(files) == 0:
             abort(404)
         if redis.exists(job_id):
             redis.delete(job_id)
-        return send_from_directory(app.root_path+"/tmp/"+job_id,files[0],as_attachment=True,cache_timeout=0)
+        return send_from_directory(app.root_path + "/tmp/" + job_id,
+                                   files[0],
+                                   as_attachment=True,
+                                   cache_timeout=0)
     abort(400)
+
 
 if __name__ == "__main__":
     app.run()
