@@ -9,7 +9,7 @@ from tasks import download_request
 app = Flask(__name__)
 
 # initialize redis connection
-redis = redis.Redis(host='localhost', port='6379')
+redis = redis.Redis(host="localhost", port="6379")
 
 
 # quick and dirty check, can be replaced by regex
@@ -27,13 +27,17 @@ def home():
 
 @app.route("/api/job/request", methods=["POST"])
 def download_req():
+    # get data from request
     req_body = request.get_json()
     if "url" not in req_body:
         return jsonify({"message": "Error: URL not provided!"})
     req_url = req_body["url"]
-    job_id = md5(req_url.encode('ascii')).hexdigest()
-    if not redis.exists(job_id) and redis.hmget(job_id,
-                                                ["state"])[0] != "done":
+
+    # convert url to job id
+    job_id = md5(req_url.encode("ascii")).hexdigest()
+
+    # start request if it's not already complete
+    if not redis.exists(job_id) and redis.hmget(job_id, ["state"])[0] != "done":
         download_request.delay(req_url)
     return jsonify({"state": "success", "id": job_id})
 
@@ -44,32 +48,43 @@ def download_status():
     req_body = request.get_json()
     if "id" not in req_body:
         return jsonify({"message": "Error: invalid request. Missing job ID."})
-    job_id = req_body['id']
+    job_id = req_body["id"]
+
     # get status from redis
     if not redis.exists(job_id):
         return jsonify({"message": "Error: ID not found."})
     status = redis.hmget(job_id, ["state", "eta", "percent"])
+
     # format and send results
-    return jsonify({
-        "state": status[0].decode('utf-8'),
-        "percent": status[2].decode('utf-8')
-    })
+    return jsonify(
+        {"state": status[0].decode("utf-8"), "percent": status[2].decode("utf-8")}
+    )
 
 
 @app.route("/api/job/download/<job_id>")
 def download_file(job_id):
+    # check id
     if len(job_id) == 32 and check_id(job_id):
+        # make sure we have a folder with files
         if job_id not in listdir(app.root_path + "/tmp"):
             abort(404)
         files = listdir(app.root_path + "/tmp/" + job_id + "/")
         if len(files) == 0:
             abort(404)
+
+        # remove job id after it has been download (to change later?)
         if redis.exists(job_id):
             redis.delete(job_id)
-        return send_from_directory(app.root_path + "/tmp/" + job_id,
-                                   files[0],
-                                   as_attachment=True,
-                                   cache_timeout=0)
+
+        # send result from directory safely
+        return send_from_directory(
+            app.root_path + "/tmp/" + job_id,
+            files[0],
+            as_attachment=True,
+            cache_timeout=0,
+        )
+
+    # invalid id is an invalid request
     abort(400)
 
 

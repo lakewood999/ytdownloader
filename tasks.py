@@ -7,10 +7,10 @@ import redis
 from hashlib import md5
 
 # initialize redis connection
-redis = redis.Redis(host='localhost', port='6379')
+redis = redis.Redis(host="localhost", port="6379")
 
 # define celery app
-app = Celery('tasks', broker='redis://localhost')
+app = Celery("tasks", broker="redis://localhost")
 
 
 # utilities for youtube_dl
@@ -29,64 +29,54 @@ class MyLogger(object):
 
 def progress_hook(d):
     """
-    Hook to process data from download callbacks during download 
+    Hook to process data from download callbacks during download
     """
-    video_id = d['filename'].split("/")[1]
-    if d['status'] == "downloading":
-        if 'eta' not in d or '_percent_str' not in d:
+    video_id = d["filename"].split("/")[1]
+    if d["status"] == "downloading":
+        if "eta" not in d or "_percent_str" not in d:
             return
         redis.hmset(
-            video_id, {
+            video_id,
+            {
                 "eta": d["_eta_str"],
                 "percent": d["_percent_str"].strip(),
-                "state": "downloading"
-            })
-    elif d['status'] == 'finished':
-        redis.hmset(video_id, {
-            "eta": "0",
-            "percent": "100%",
-            "state": "processing"
-        })
-        print('Done downloading, now converting ...')
+                "state": "downloading",
+            },
+        )
+    elif d["status"] == "finished":
+        redis.hmset(video_id, {"eta": "0", "percent": "100%", "state": "processing"})
+        print("Done downloading, now converting ...")
 
 
 def post_hook(d):
     """
     Hook to process data when processing (e.g. converting) during download
     """
-    if d['status'] == "started":
-        video_id = d['info_dict']['_filename'].split("/")[1]
+    if d["status"] == "started":
+        video_id = d["info_dict"]["_filename"].split("/")[1]
         print(video_id)
-        redis.hmset(video_id, {
-            "eta": "unknown",
-            "percent": "unknown",
-            "state": "processing"
-        })
-    elif d['status'] == "finished":
-        video_id = d['info_dict']['_filename'].split("/")[1]
-        redis.hmset(video_id, {
-            "eta": "unknown",
-            "percent": "unknown",
-            "state": "done"
-        })
+        redis.hmset(
+            video_id, {"eta": "unknown", "percent": "unknown", "state": "processing"}
+        )
+    elif d["status"] == "finished":
+        video_id = d["info_dict"]["_filename"].split("/")[1]
+        redis.hmset(video_id, {"eta": "unknown", "percent": "unknown", "state": "done"})
 
 
 # config for youtube download
 ydl_opts = {
-    'format': 'bestaudio/best',
+    "format": "bestaudio/best",
     #'postprocessors': [{
     #    'key': 'FFmpegExtractAudio',
     #    'when': 'post_process',
     #    'preferredcodec': 'mp3',
     #    'preferredquality': '192',
-    #}],
-    'logger': MyLogger(),
-    'progress_hooks': [progress_hook],
-    'postprocessor_hooks': [post_hook],
-    'outtmpl': "%(title)s-%(id)s.%(ext)s",
-    'paths': {
-        'home': 'tmp/'
-    },
+    # }],
+    "logger": MyLogger(),
+    "progress_hooks": [progress_hook],
+    "postprocessor_hooks": [post_hook],
+    "outtmpl": "%(title)s-%(id)s.%(ext)s",
+    "paths": {"home": "tmp/"},
     "verbose": True,
 }
 
@@ -99,7 +89,7 @@ ydl_opts = {
 @app.task
 def download_request(url):
     # adjust config for
-    job_id = md5(url.encode('ascii')).hexdigest()
+    job_id = md5(url.encode("ascii")).hexdigest()
     ydl_opts["paths"]["home"] = "tmp/" + job_id
     try:
         with ytdl.YoutubeDL(ydl_opts) as ydl:
