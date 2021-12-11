@@ -10,45 +10,119 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 var e = React.createElement;
 
-var Test = function (_React$Component) {
-  _inherits(Test, _React$Component);
+var StatusLine = function (_React$Component) {
+  _inherits(StatusLine, _React$Component);
 
-  function Test() {
-    _classCallCheck(this, Test);
+  function StatusLine(props) {
+    _classCallCheck(this, StatusLine);
 
-    return _possibleConstructorReturn(this, (Test.__proto__ || Object.getPrototypeOf(Test)).apply(this, arguments));
+    return _possibleConstructorReturn(this, (StatusLine.__proto__ || Object.getPrototypeOf(StatusLine)).call(this, props));
   }
 
-  _createClass(Test, [{
+  _createClass(StatusLine, [{
     key: "render",
     value: function render() {
+      var prefix = "Step " + this.props.itemNumber + ": ";
+      var body = this.props.text;
+      var suffix = this.props.suffix;
+      var status_color, icon;
+      if (this.props.stateNumber === this.props.stateLoading && this.props.stateNumber !== this.props.stateDone) {
+        status_color = "has-text-info";
+        icon = React.createElement("i", { className: "fas fa-sync fa-spin" });
+      } else if (this.props.stateNumber >= this.props.stateDone) {
+        status_color = "has-text-success";
+        icon = React.createElement("i", { className: "fas fa-check" });
+      } else {
+        status_color = "grey-lighter";
+        icon = null;
+      }
       return React.createElement(
-        "p",
-        null,
-        "Hello!"
+        "span",
+        { className: status_color },
+        React.createElement(
+          "b",
+          null,
+          prefix
+        ),
+        body + " " + suffix,
+        " ",
+        icon
       );
     }
   }]);
 
-  return Test;
+  return StatusLine;
 }(React.Component);
 
-var DownloadForm = function (_React$Component2) {
-  _inherits(DownloadForm, _React$Component2);
+var DownloadStatusBox = function (_React$Component2) {
+  _inherits(DownloadStatusBox, _React$Component2);
+
+  function DownloadStatusBox(props) {
+    _classCallCheck(this, DownloadStatusBox);
+
+    return _possibleConstructorReturn(this, (DownloadStatusBox.__proto__ || Object.getPrototypeOf(DownloadStatusBox)).call(this, props));
+  }
+
+  _createClass(DownloadStatusBox, [{
+    key: "render",
+    value: function render() {
+      var _this3 = this;
+
+      var out;
+      if (this.props.state !== -1) {
+        out = this.props.steps.map(function (step) {
+          return React.createElement(
+            "div",
+            null,
+            React.createElement(StatusLine, { itemNumber: step.number,
+              text: step.text,
+              suffix: step.suffix,
+              stateNumber: _this3.props.state,
+              stateDone: step.stateDone,
+              stateLoading: step.stateLoading
+            }),
+            React.createElement("br", null)
+          );
+        });
+      } else {
+        out = React.createElement(
+          "span",
+          { className: "has-text-danger" },
+          React.createElement(
+            "b",
+            null,
+            "Message: "
+          ),
+          "An error has occurred. Please check URL or contact an administrator."
+        );
+      }
+      return React.createElement(
+        "div",
+        null,
+        out
+      );
+    }
+  }]);
+
+  return DownloadStatusBox;
+}(React.Component);
+
+var DownloadForm = function (_React$Component3) {
+  _inherits(DownloadForm, _React$Component3);
 
   function DownloadForm(props) {
     _classCallCheck(this, DownloadForm);
 
-    var _this2 = _possibleConstructorReturn(this, (DownloadForm.__proto__ || Object.getPrototypeOf(DownloadForm)).call(this, props));
+    var _this4 = _possibleConstructorReturn(this, (DownloadForm.__proto__ || Object.getPrototypeOf(DownloadForm)).call(this, props));
 
-    _this2.state = { downloading: false, url: "", interval: null, jobid: "", state: 0 };
+    _this4.state = { downloading: false, url: "", interval: null, jobid: "", state: 0 };
 
-    _this2.handleURLChange = _this2.handleURLChange.bind(_this2);
-    _this2.handleSubmit = _this2.handleSubmit.bind(_this2);
-    _this2.makeRequest = _this2.makeRequest.bind(_this2);
-    _this2.checkStatus = _this2.checkStatus.bind(_this2);
-    _this2.restart = _this2.restart.bind(_this2);
-    return _this2;
+    _this4.handleURLChange = _this4.handleURLChange.bind(_this4);
+    _this4.handleSubmit = _this4.handleSubmit.bind(_this4);
+    _this4.makeRequest = _this4.makeRequest.bind(_this4);
+    _this4.checkStatus = _this4.checkStatus.bind(_this4);
+    _this4.restart = _this4.restart.bind(_this4);
+    return _this4;
   }
 
   _createClass(DownloadForm, [{
@@ -70,7 +144,7 @@ var DownloadForm = function (_React$Component2) {
   }, {
     key: "makeRequest",
     value: function makeRequest() {
-      var _this3 = this;
+      var _this5 = this;
 
       this.setState({ downloading: true });
       fetch('/api/job/request', {
@@ -83,13 +157,13 @@ var DownloadForm = function (_React$Component2) {
       }).then(function (response) {
         return response.json();
       }).then(function (data) {
-        _this3.setState({ state: 1, downloading: true, interval: setInterval(_this3.checkStatus, 500), jobid: data.id, percent: " 0%" });
+        _this5.setState({ state: 1, downloading: true, interval: setInterval(_this5.checkStatus, 500), jobid: data.id, percent: "0%" });
       });
     }
   }, {
     key: "checkStatus",
     value: function checkStatus() {
-      var _this4 = this;
+      var _this6 = this;
 
       if (this.state.jobid === null) {
         return;
@@ -104,156 +178,66 @@ var DownloadForm = function (_React$Component2) {
       }).then(function (response) {
         return response.json();
       }).then(function (data) {
-        if (data.state === "downloading" && _this4.state.state !== 2) {
-          _this4.setState({ state: 2, percent: data.percent });
-        } else if (data.state === "downloading" && _this4.state.state === 2) {
-          _this4.setState({ percent: data.percent });
-        } else if (data.state === "processing" && _this4.state.state !== 3) {
-          _this4.setState({ state: 3 });
-        } else if (data.state === "done" && _this4.state.state !== 4) {
-          _this4.setState({ state: 4, interval: clearInterval(_this4.state.interval), percent: " 100%" });
+        if (data.state === "downloading" && _this6.state.state !== 2) {
+          _this6.setState({ state: 2, percent: data.percent });
+        } else if (data.state === "downloading" && _this6.state.state === 2) {
+          _this6.setState({ percent: data.percent });
+        } else if (data.state === "processing" && _this6.state.state !== 3) {
+          _this6.setState({ state: 3 });
+        } else if (data.state === "done" && _this6.state.state !== 4) {
+          _this6.setState({ state: 4, interval: clearInterval(_this6.state.interval), percent: "100%" });
         } else if (data.state === "error") {
-          _this4.setState({ state: -1, interval: null });
+          _this6.setState({ state: -1, interval: null });
         }
       });
     }
   }, {
     key: "render",
     value: function render() {
-      var downloadBox = React.createElement("p", null);
-      var stepOneClass, stepTwoClass, stepThreeClass, stepFourClass;
-      stepOneClass = stepTwoClass = stepThreeClass = stepFourClass = "grey-lighter";
-      var stepOneText, stepTwoText, stepThreeText, stepFourText;
-      stepOneText = stepTwoText = stepThreeText = stepFourText = "";
+      var downloadBox, downloadStatus;
       var downloadButton = null;
-      var message = "";
       if (this.state.downloading) {
-        if (this.state.state === 0) {
-          stepOneClass = "has-text-info";
-          stepOneText = React.createElement("i", { className: "fas fa-sync fa-spin" });
-        } else {
-          stepOneClass = "has-text-success";
-          stepOneText = React.createElement("i", { className: "fas fa-check" });
-        }
-
-        if (this.state.state === 2 || this.state.state === 1) {
-          stepTwoClass = "has-text-info";
-          stepTwoText = React.createElement(
-            "span",
-            null,
-            React.createElement("i", { className: "fas fa-sync fa-spin" }),
-            " ",
-            this.state.percent
-          );
-        } else if (this.state.state >= 3) {
-          stepTwoClass = "has-text-success";
-          stepTwoText = React.createElement("i", { className: "fas fa-check" });
-        }
-
-        if (this.state.state === 3) {
-          stepThreeClass = "has-text-info";
-          stepThreeText = React.createElement("i", { className: "fas fa-sync fa-spin" });
-        } else if (this.state.state >= 4) {
-          stepThreeClass = "has-text-success";
-          stepThreeText = React.createElement("i", { className: "fas fa-check" });
-        }
+        var steps = [{ "number": 1, "text": "Queue download request", "suffix": "", "stateLoading": 1, "stateDone": 2 }, { "number": 2, "text": "Video downloading on server", "suffix": "(" + this.state.percent + ")", "stateLoading": 2, "stateDone": 3 }, { "number": 3, "text": "Post-processing and conversion", "suffix": "", "stateLoading": 3, "stateDone": 4 }, { "number": 4, "text": "Read to download", "suffix": "", "stateLoading": 4, "stateDone": 4 }];
+        downloadStatus = React.createElement(DownloadStatusBox, { state: this.state.state, steps: steps });
 
         if (this.state.state === 4) {
-          stepFourClass = "has-text-success";
-          stepFourText = React.createElement("i", { className: "fas fa-check" });
           downloadButton = React.createElement(
             "div",
-            { className: "container" },
+            { className: "field is-grouped mt-1" },
             React.createElement(
-              "a",
-              { className: "button is-info", download: true, href: "/api/job/download/" + this.state.jobid },
-              "Download"
+              "p",
+              { "class": "control" },
+              React.createElement(
+                "a",
+                { className: "button is-info", download: true, href: "/api/job/download/" + this.state.jobid },
+                "Download"
+              )
             ),
-            " ",
-            React.createElement("input", { className: "button is-info", value: "Reset", type: "reset" })
+            React.createElement(
+              "p",
+              { "class": "control" },
+              React.createElement("input", { className: "button is-info", value: "Reset", type: "reset" })
+            )
+          );
+        } else if (this.state.state === -1) {
+          downloadButton = React.createElement(
+            "div",
+            { className: "field is-grouped mt-1" },
+            React.createElement(
+              "p",
+              { "class": "control" },
+              React.createElement("input", { className: "button is-info", value: "Reset", type: "reset" })
+            )
           );
         }
 
-        if (this.state.state === -1) {
-          stepOneClass = stepTwoClass = stepThreeClass = stepFourClass = "has-text-danger";
-          message = React.createElement(
-            "span",
-            null,
-            React.createElement(
-              "b",
-              null,
-              "Message: "
-            ),
-            "An error has occurred. Please check URL or contact an administrator!"
-          );
-          downloadButton = React.createElement(
-            "div",
-            { className: "container" },
-            React.createElement("input", { className: "button is-info", value: "Reset", type: "reset" })
-          );
-        }
-      }
-
-      if (this.state.downloading) {
         downloadBox = React.createElement(
           "div",
           { className: "" },
           React.createElement(
             "div",
             { className: "container" },
-            React.createElement(
-              "span",
-              { className: stepOneClass },
-              React.createElement(
-                "b",
-                null,
-                "Step 1: "
-              ),
-              " Queue download request ",
-              stepOneText
-            ),
-            React.createElement("br", null),
-            React.createElement(
-              "span",
-              { className: stepTwoClass },
-              React.createElement(
-                "b",
-                null,
-                "Step 2: "
-              ),
-              " Video downloading ",
-              stepTwoText
-            ),
-            React.createElement("br", null),
-            React.createElement(
-              "span",
-              { className: stepThreeClass },
-              React.createElement(
-                "b",
-                null,
-                "Step 3: "
-              ),
-              " Post-processing and conversion ",
-              stepThreeText
-            ),
-            React.createElement("br", null),
-            React.createElement(
-              "span",
-              { className: stepFourClass },
-              React.createElement(
-                "b",
-                null,
-                "Step 4: "
-              ),
-              " Ready to download ",
-              stepFourText
-            ),
-            React.createElement("br", null),
-            React.createElement(
-              "span",
-              { className: stepOneClass },
-              message
-            )
+            downloadStatus
           ),
           downloadButton
         );
@@ -280,8 +264,7 @@ var DownloadForm = function (_React$Component2) {
             )
           )
         ),
-        downloadBox,
-        React.createElement(Test, null)
+        downloadBox
       );
     }
   }]);

@@ -57,7 +57,7 @@ def download_status():
 
     # format and send results
     return jsonify(
-        {"state": status[0].decode("utf-8"), "percent": status[2].decode("utf-8")}
+        {"state": status[0].decode("utf-8"), "percent": status[2].decode("utf-8").strip()}
     )
 
 

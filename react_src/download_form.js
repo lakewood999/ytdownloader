@@ -1,9 +1,51 @@
 'use strict';
 const e = React.createElement;
 
-class Test extends React.Component {
+class StatusLine extends React.Component {
+  constructor(props) {
+    super(props);
+  }
+
   render() {
-    return <p>Hello!</p>;
+    const prefix = "Step " + this.props.itemNumber + ": ";
+    const body = this.props.text;
+    const suffix = this.props.suffix;
+    var status_color, icon;
+    if (this.props.stateNumber === this.props.stateLoading && this.props.stateNumber !== this.props.stateDone) {
+      status_color = "has-text-info";
+      icon = <i className="fas fa-sync fa-spin"></i>;
+    } else if (this.props.stateNumber >= this.props.stateDone) {
+      status_color = "has-text-success";
+      icon = <i className="fas fa-check"></i>;
+    } else {
+      status_color = "grey-lighter";
+      icon = null;
+    }
+    return <span className={status_color}><b>{prefix}</b>{body + " " + suffix} {icon}</span>;
+  }
+}
+
+class DownloadStatusBox extends React.Component {
+  constructor(props) {
+    super(props);
+  }
+
+  render() {
+    var out;
+    if (this.props.state !== -1) {
+      out = this.props.steps.map(
+        (step) => <div><StatusLine itemNumber={step.number}
+          text={step.text} 
+          suffix={step.suffix}
+          stateNumber={this.props.state}
+          stateDone={step.stateDone}
+          stateLoading={step.stateLoading} 
+        /><br/></div>
+      )
+    } else {
+      out = <span className="has-text-danger"><b>Message: </b>An error has occurred. Please check URL or contact an administrator.</span>;
+    }
+    return <div>{out}</div>;
   }
 }
 
@@ -43,7 +85,7 @@ class DownloadForm extends React.Component {
       body: JSON.stringify({ "url": this.state.url }),
     }).then(response => response.json())
       .then(data => {
-        this.setState({ state: 1, downloading: true, interval: setInterval(this.checkStatus, 500), jobid: data.id, percent: " 0%" })
+        this.setState({ state: 1, downloading: true, interval: setInterval(this.checkStatus, 500), jobid: data.id, percent: "0%" })
       });
   }
 
@@ -67,7 +109,7 @@ class DownloadForm extends React.Component {
         } else if (data.state === "processing" && this.state.state !== 3) {
           this.setState({ state: 3 })
         } else if ((data.state === "done" && this.state.state !== 4)) {
-          this.setState({ state: 4, interval: clearInterval(this.state.interval), percent: " 100%" })
+          this.setState({ state: 4, interval: clearInterval(this.state.interval), percent: "100%" })
         } else if (data.state === "error") {
           this.setState({ state: -1, interval: null })
         }
@@ -75,63 +117,31 @@ class DownloadForm extends React.Component {
   }
 
   render() {
-    var downloadBox = <p></p>;
-    var stepOneClass, stepTwoClass, stepThreeClass, stepFourClass;
-    stepOneClass = stepTwoClass = stepThreeClass = stepFourClass = "grey-lighter";
-    var stepOneText, stepTwoText, stepThreeText, stepFourText;
-    stepOneText = stepTwoText = stepThreeText = stepFourText = "";
+    var downloadBox, downloadStatus;
     var downloadButton = null;
-    var message = "";
     if (this.state.downloading) {
-      if (this.state.state === 0) {
-        stepOneClass = "has-text-info";
-        stepOneText = <i className="fas fa-sync fa-spin"></i>;
-      } else {
-        stepOneClass = "has-text-success";
-        stepOneText = <i className="fas fa-check"></i>;
-      }
-
-      if (this.state.state === 2 || this.state.state === 1) {
-        stepTwoClass = "has-text-info";
-        stepTwoText = <span><i className="fas fa-sync fa-spin"></i> {this.state.percent}</span>;
-      } else if (this.state.state >= 3) {
-        stepTwoClass = "has-text-success";
-        stepTwoText = <i className="fas fa-check"></i>;
-      }
-
-      if (this.state.state === 3) {
-        stepThreeClass = "has-text-info";
-        stepThreeText = <i className="fas fa-sync fa-spin"></i>;
-      } else if (this.state.state >= 4) {
-        stepThreeClass = "has-text-success";
-        stepThreeText = <i className="fas fa-check"></i>;
-      }
+      var steps = [
+        { "number": 1, "text": "Queue download request", "suffix": "", "stateLoading": 1, "stateDone": 2 },
+        { "number": 2, "text": "Video downloading on server", "suffix": "("+this.state.percent+")", "stateLoading": 2, "stateDone": 3 },
+        { "number": 3, "text": "Post-processing and conversion", "suffix": "", "stateLoading": 3, "stateDone": 4 },
+        { "number": 4, "text": "Read to download", "suffix": "", "stateLoading": 4, "stateDone": 4 }
+      ];
+      downloadStatus = <DownloadStatusBox state={this.state.state} steps={steps} />;
 
       if (this.state.state === 4) {
-        stepFourClass = "has-text-success";
-        stepFourText = <i className="fas fa-check"></i>;
-        downloadButton = <div className="container">
-          <a className="button is-info" download href={"/api/job/download/" + this.state.jobid}>Download</a> <input className="button is-info" value="Reset" type="reset" />
+        downloadButton = <div className="field is-grouped mt-1">
+          <p class="control"><a className="button is-info" download href={"/api/job/download/" + this.state.jobid}>Download</a></p>
+          <p class="control"><input className="button is-info" value="Reset" type="reset" /></p>
+        </div>;
+      } else if (this.state.state === -1) {
+        downloadButton = <div className="field is-grouped mt-1">
+          <p class="control"><input className="button is-info" value="Reset" type="reset" /></p>
         </div>;
       }
 
-      if (this.state.state === -1) {
-        stepOneClass = stepTwoClass = stepThreeClass = stepFourClass = "has-text-danger";
-        message = <span><b>Message: </b>An error has occurred. Please check URL or contact an administrator!</span>;
-        downloadButton = <div className="container">
-          <input className="button is-info" value="Reset" type="reset" />
-        </div>;
-      }
-    }
-
-    if (this.state.downloading) {
       downloadBox = <div className="">
         <div className="container">
-          <span className={stepOneClass}><b>Step 1: </b> Queue download request {stepOneText}</span><br />
-          <span className={stepTwoClass}><b>Step 2: </b> Video downloading {stepTwoText}</span><br />
-          <span className={stepThreeClass}><b>Step 3: </b> Post-processing and conversion {stepThreeText}</span><br />
-          <span className={stepFourClass}><b>Step 4: </b> Ready to download {stepFourText}</span><br />
-          <span className={stepOneClass}>{message}</span>
+          {downloadStatus}
         </div>
         {downloadButton}
       </div>;
@@ -150,7 +160,6 @@ class DownloadForm extends React.Component {
           </div>
         </div>
         {downloadBox}
-        <Test />
       </form>
     );
   }
