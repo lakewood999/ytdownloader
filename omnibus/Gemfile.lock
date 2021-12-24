@@ -1,3 +1,10 @@
+GIT
+  remote: https://github.com/chef/omnibus-software.git
+  revision: 4707275bb5cac7643938972738e83723e8fd5621
+  specs:
+    omnibus-software (4.0.0)
+      omnibus (>= 8.0.0)
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -359,13 +366,14 @@ GEM
     zhexdump (0.0.2)
 
 PLATFORMS
-  ruby
+  x86_64-linux
 
 DEPENDENCIES
   berkshelf
   kitchen-vagrant
   omnibus (~> 8.2)
+  omnibus-software!
   test-kitchen
 
 BUNDLED WITH
-   2.1.4
+   2.3.3

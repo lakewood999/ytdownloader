@@ -19,7 +19,7 @@ build_iteration 1
 dependency "preparation"
 
 # ytdownloader dependencies/components
-# dependency "somedep"
+dependency "python3"
 
 exclude "**/.git"
 exclude "**/bundler/git"
