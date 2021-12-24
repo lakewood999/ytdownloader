@@ -5,8 +5,8 @@
 #
 
 name "ytdownloader"
-maintainer "CHANGE ME"
-homepage "https://CHANGE-ME.com"
+maintainer "Steven Su"
+homepage "https://stevensu.dev"
 
 # Defaults to C:/ytdownloader on Windows
 # and /opt/ytdownloader on all other platforms
