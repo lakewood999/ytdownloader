@@ -35,8 +35,7 @@ def progress_hook(d):
     if d["status"] == "downloading":
         if "eta" not in d or "_percent_str" not in d:
             return
-        redis.hmset(
-            video_id,
+        redis.hmset(video_id,
             {
                 "eta": d["_eta_str"],
                 "percent": d["_percent_str"].strip(),
@@ -45,7 +44,6 @@ def progress_hook(d):
         )
     elif d["status"] == "finished":
         redis.hmset(video_id, {"eta": "0", "percent": "100%", "state": "processing"})
-        print("Done downloading, now converting ...")
 
 
 def post_hook(d):
@@ -54,7 +52,6 @@ def post_hook(d):
     """
     if d["status"] == "started":
         video_id = d["info_dict"]["_filename"].split("/")[1]
-        print(video_id)
         redis.hmset(
             video_id, {"eta": "unknown", "percent": "unknown", "state": "processing"}
         )
@@ -62,38 +59,49 @@ def post_hook(d):
         video_id = d["info_dict"]["_filename"].split("/")[1]
         redis.hmset(video_id, {"eta": "unknown", "percent": "unknown", "state": "done"})
 
-
-# config for youtube download
-ydl_opts = {
-    "format": "bestaudio/best",
-    #'postprocessors': [{
-    #    'key': 'FFmpegExtractAudio',
-    #    'when': 'post_process',
-    #    'preferredcodec': 'mp3',
-    #    'preferredquality': '192',
-    # }],
-    "logger": MyLogger(),
-    "progress_hooks": [progress_hook],
-    "postprocessor_hooks": [post_hook],
-    "outtmpl": "%(title)s-%(id)s.%(ext)s",
-    "paths": {"home": "tmp/"},
-    "verbose": True,
-}
-
+# urls:
 # test url: https://www.youtube.com/watch?v=BaW_jenozKc
 # long url: https://www.youtube.com/watch?v=ddRMOKFDgos
 # short ur: https://www.youtube.com/watch?v=RKmw9oS__MM
 
-
-# task definition
+# Main task definition
 @app.task
-def download_request(url):
-    # adjust config for
-    job_id = md5(url.encode("ascii")).hexdigest()
+def download_request(url, dl_format):
+    # config for youtube download
+    ydl_opts = {
+        "format": "bestvideo+bestaudio",
+        "postprocessors": [],
+        "logger": MyLogger(),
+        "progress_hooks": [progress_hook],
+        "postprocessor_hooks": [post_hook],
+        "outtmpl": "%(title)s-%(id)s.%(ext)s",
+        "paths": {"home": "tmp/"},
+        "verbose": True,
+    }
+
+    ydl_audio_postprocessor = {
+        "key": "FFmpegExtractAudio",
+        "when": "post_process",
+        "preferredcodec": "mp3",
+        "preferredquality": "192",
+    }
+
+    # job id used to track progress
+    job_id = md5((url+"-"+dl_format).encode("ascii")).hexdigest()
+    # store files by <id>/<format> (more to come later when more options are added)
     ydl_opts["paths"]["home"] = "tmp/" + job_id
+    # add additional post processor if audio-only requested
+    if dl_format == "audio_only":
+        ydl_opts["postprocessors"].append(ydl_audio_postprocessor)
+        ydl_opts["format"] = "bestaudio"
+    elif dl_format == "video_only":
+        ydl_opts["format"] = "bestvideo"
+
+    # start download process
     try:
         with ytdl.YoutubeDL(ydl_opts) as ydl:
             ydl.download([url])
-    except Exception:
-        redis.hmset(job_id, {"state": "error", "eta": "", "percent": ""})
+    except Exception as e:
+        print("Error downloading")
+        redis.hmset(job_id, {"state": "error", "eta": "", "percent": "", "message": str(e)})
         return

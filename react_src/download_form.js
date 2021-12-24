@@ -34,16 +34,16 @@ class DownloadStatusBox extends React.Component {
     var out;
     if (this.props.state !== -1) {
       out = this.props.steps.map(
-        (step) => <div><StatusLine itemNumber={step.number}
-          text={step.text} 
+        (step) => <div key={step.number}><StatusLine itemNumber={step.number}
+          text={step.text}
           suffix={step.suffix}
           stateNumber={this.props.state}
           stateDone={step.stateDone}
-          stateLoading={step.stateLoading} 
-        /><br/></div>
+          stateLoading={step.stateLoading}
+        /><br /></div>
       )
     } else {
-      out = <span className="has-text-danger"><b>Message: </b>An error has occurred. Please check URL or contact an administrator.</span>;
+      out = <span className="has-text-danger"><b>Message: </b>An error has occurred. Please check URL or contact an administrator. Error details: {this.props.error_code}</span>;
     }
     return <div>{out}</div>;
   }
@@ -52,9 +52,10 @@ class DownloadStatusBox extends React.Component {
 class DownloadForm extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { downloading: false, url: "", interval: null, jobid: "", state: 0 };
+    this.state = { downloading: false, url: "", interval: null, jobid: "", state: 0, format: "audio_only", message: "" };
 
     this.handleURLChange = this.handleURLChange.bind(this);
+    this.handleFormatChange = this.handleFormatChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
     this.makeRequest = this.makeRequest.bind(this);
     this.checkStatus = this.checkStatus.bind(this);
@@ -63,6 +64,11 @@ class DownloadForm extends React.Component {
 
   handleURLChange(event) {
     this.setState({ url: event.target.value })
+  }
+
+  handleFormatChange(event) {
+    this.setState({ format: event.target.value });
+    console.log(event.target.value);
   }
 
   handleSubmit(event) {
@@ -82,10 +88,14 @@ class DownloadForm extends React.Component {
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({ "url": this.state.url }),
+      body: JSON.stringify({ "url": this.state.url, "format": this.state.format }),
     }).then(response => response.json())
       .then(data => {
-        this.setState({ state: 1, downloading: true, interval: setInterval(this.checkStatus, 500), jobid: data.id, percent: "0%" })
+        if (data.state === "success") {
+          this.setState({ state: 1, downloading: true, interval: setInterval(this.checkStatus, 500), jobid: data.id, percent: "0%" });
+        } else {
+          this.setState({ state: -1, interval: null, message: data.message });
+        }
       });
   }
 
@@ -102,16 +112,17 @@ class DownloadForm extends React.Component {
       body: JSON.stringify({ "id": this.state.jobid }),
     }).then(response => response.json())
       .then(data => {
+        console.log(data);
         if (data.state === "downloading" && this.state.state !== 2) {
           this.setState({ state: 2, percent: data.percent })
         } else if (data.state === "downloading" && this.state.state === 2) {
           this.setState({ percent: data.percent })
         } else if (data.state === "processing" && this.state.state !== 3) {
-          this.setState({ state: 3 })
+          this.setState({ state: 3, percent: "100%" })
         } else if ((data.state === "done" && this.state.state !== 4)) {
           this.setState({ state: 4, interval: clearInterval(this.state.interval), percent: "100%" })
         } else if (data.state === "error") {
-          this.setState({ state: -1, interval: null })
+          this.setState({ state: -1, interval: null, message: data.message });
         }
       });
   }
@@ -122,20 +133,20 @@ class DownloadForm extends React.Component {
     if (this.state.downloading) {
       var steps = [
         { "number": 1, "text": "Queue download request", "suffix": "", "stateLoading": 1, "stateDone": 2 },
-        { "number": 2, "text": "Video downloading on server", "suffix": "("+this.state.percent+")", "stateLoading": 2, "stateDone": 3 },
+        { "number": 2, "text": "Video downloading on server", "suffix": "(" + this.state.percent + ")", "stateLoading": 2, "stateDone": 3 },
         { "number": 3, "text": "Post-processing and conversion", "suffix": "", "stateLoading": 3, "stateDone": 4 },
         { "number": 4, "text": "Read to download", "suffix": "", "stateLoading": 4, "stateDone": 4 }
       ];
-      downloadStatus = <DownloadStatusBox state={this.state.state} steps={steps} />;
+      downloadStatus = <DownloadStatusBox state={this.state.state} steps={steps} error_code={this.state.message} />;
 
       if (this.state.state === 4) {
         downloadButton = <div className="field is-grouped mt-1">
-          <p class="control"><a className="button is-info" download href={"/api/job/download/" + this.state.jobid}>Download</a></p>
-          <p class="control"><input className="button is-info" value="Reset" type="reset" /></p>
+          <p className="control"><a className="button is-info" download href={"/api/job/download/" + this.state.jobid + "/" + this.state.format}>Download</a></p>
+          <p className="control"><input className="button is-info" value="Reset" type="reset" /></p>
         </div>;
       } else if (this.state.state === -1) {
         downloadButton = <div className="field is-grouped mt-1">
-          <p class="control"><input className="button is-info" value="Reset" type="reset" /></p>
+          <p className="control"><input className="button is-info" value="Reset" type="reset" /></p>
         </div>;
       }
 
@@ -149,9 +160,18 @@ class DownloadForm extends React.Component {
 
     return (
       <form onSubmit={this.handleSubmit} onReset={this.restart}>
-        <div className="field has-addons">
+        <div className="field has-addons has-addons-centered">
+          <div className="control">
+            <span className="select">
+              <select disabled={this.state.downloading} onChange={this.handleFormatChange} value={this.state.format}>
+                <option value="audio_only">Audio Only</option>
+                <option value="video_only">Video Only</option>
+                <option value="both">Audio + Video</option>
+              </select>
+            </span>
+          </div>
           <div className="control is-expanded">
-            <input className="input" disabled={this.state.downloading} type="text" placeholder="Video URL" onChange={this.handleURLChange} value={this.state.url} />
+            <input className="input" disabled={this.state.downloading} type="text" placeholder="Source URL" onChange={this.handleURLChange} value={this.state.url} />
           </div>
           <div className="control">
             <button disabled={this.state.downloading} className="button is-info">

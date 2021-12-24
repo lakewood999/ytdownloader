@@ -73,7 +73,7 @@ var DownloadStatusBox = function (_React$Component2) {
         out = this.props.steps.map(function (step) {
           return React.createElement(
             "div",
-            null,
+            { key: step.number },
             React.createElement(StatusLine, { itemNumber: step.number,
               text: step.text,
               suffix: step.suffix,
@@ -93,7 +93,8 @@ var DownloadStatusBox = function (_React$Component2) {
             null,
             "Message: "
           ),
-          "An error has occurred. Please check URL or contact an administrator."
+          "An error has occurred. Please check URL or contact an administrator. Error details: ",
+          this.props.error_code
         );
       }
       return React.createElement(
@@ -115,9 +116,10 @@ var DownloadForm = function (_React$Component3) {
 
     var _this4 = _possibleConstructorReturn(this, (DownloadForm.__proto__ || Object.getPrototypeOf(DownloadForm)).call(this, props));
 
-    _this4.state = { downloading: false, url: "", interval: null, jobid: "", state: 0 };
+    _this4.state = { downloading: false, url: "", interval: null, jobid: "", state: 0, format: "audio_only", message: "" };
 
     _this4.handleURLChange = _this4.handleURLChange.bind(_this4);
+    _this4.handleFormatChange = _this4.handleFormatChange.bind(_this4);
     _this4.handleSubmit = _this4.handleSubmit.bind(_this4);
     _this4.makeRequest = _this4.makeRequest.bind(_this4);
     _this4.checkStatus = _this4.checkStatus.bind(_this4);
@@ -129,6 +131,12 @@ var DownloadForm = function (_React$Component3) {
     key: "handleURLChange",
     value: function handleURLChange(event) {
       this.setState({ url: event.target.value });
+    }
+  }, {
+    key: "handleFormatChange",
+    value: function handleFormatChange(event) {
+      this.setState({ format: event.target.value });
+      console.log(event.target.value);
     }
   }, {
     key: "handleSubmit",
@@ -153,11 +161,15 @@ var DownloadForm = function (_React$Component3) {
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ "url": this.state.url })
+        body: JSON.stringify({ "url": this.state.url, "format": this.state.format })
       }).then(function (response) {
         return response.json();
       }).then(function (data) {
-        _this5.setState({ state: 1, downloading: true, interval: setInterval(_this5.checkStatus, 500), jobid: data.id, percent: "0%" });
+        if (data.state === "success") {
+          _this5.setState({ state: 1, downloading: true, interval: setInterval(_this5.checkStatus, 500), jobid: data.id, percent: "0%" });
+        } else {
+          _this5.setState({ state: -1, interval: null, message: data.message });
+        }
       });
     }
   }, {
@@ -178,16 +190,17 @@ var DownloadForm = function (_React$Component3) {
       }).then(function (response) {
         return response.json();
       }).then(function (data) {
+        console.log(data);
         if (data.state === "downloading" && _this6.state.state !== 2) {
           _this6.setState({ state: 2, percent: data.percent });
         } else if (data.state === "downloading" && _this6.state.state === 2) {
           _this6.setState({ percent: data.percent });
         } else if (data.state === "processing" && _this6.state.state !== 3) {
-          _this6.setState({ state: 3 });
+          _this6.setState({ state: 3, percent: "100%" });
         } else if (data.state === "done" && _this6.state.state !== 4) {
           _this6.setState({ state: 4, interval: clearInterval(_this6.state.interval), percent: "100%" });
         } else if (data.state === "error") {
-          _this6.setState({ state: -1, interval: null });
+          _this6.setState({ state: -1, interval: null, message: data.message });
         }
       });
     }
@@ -198,7 +211,7 @@ var DownloadForm = function (_React$Component3) {
       var downloadButton = null;
       if (this.state.downloading) {
         var steps = [{ "number": 1, "text": "Queue download request", "suffix": "", "stateLoading": 1, "stateDone": 2 }, { "number": 2, "text": "Video downloading on server", "suffix": "(" + this.state.percent + ")", "stateLoading": 2, "stateDone": 3 }, { "number": 3, "text": "Post-processing and conversion", "suffix": "", "stateLoading": 3, "stateDone": 4 }, { "number": 4, "text": "Read to download", "suffix": "", "stateLoading": 4, "stateDone": 4 }];
-        downloadStatus = React.createElement(DownloadStatusBox, { state: this.state.state, steps: steps });
+        downloadStatus = React.createElement(DownloadStatusBox, { state: this.state.state, steps: steps, error_code: this.state.message });
 
         if (this.state.state === 4) {
           downloadButton = React.createElement(
@@ -206,16 +219,16 @@ var DownloadForm = function (_React$Component3) {
             { className: "field is-grouped mt-1" },
             React.createElement(
               "p",
-              { "class": "control" },
+              { className: "control" },
               React.createElement(
                 "a",
-                { className: "button is-info", download: true, href: "/api/job/download/" + this.state.jobid },
+                { className: "button is-info", download: true, href: "/api/job/download/" + this.state.jobid + "/" + this.state.format },
                 "Download"
               )
             ),
             React.createElement(
               "p",
-              { "class": "control" },
+              { className: "control" },
               React.createElement("input", { className: "button is-info", value: "Reset", type: "reset" })
             )
           );
@@ -225,7 +238,7 @@ var DownloadForm = function (_React$Component3) {
             { className: "field is-grouped mt-1" },
             React.createElement(
               "p",
-              { "class": "control" },
+              { className: "control" },
               React.createElement("input", { className: "button is-info", value: "Reset", type: "reset" })
             )
           );
@@ -248,11 +261,38 @@ var DownloadForm = function (_React$Component3) {
         { onSubmit: this.handleSubmit, onReset: this.restart },
         React.createElement(
           "div",
-          { className: "field has-addons" },
+          { className: "field has-addons has-addons-centered" },
+          React.createElement(
+            "div",
+            { className: "control" },
+            React.createElement(
+              "span",
+              { className: "select" },
+              React.createElement(
+                "select",
+                { disabled: this.state.downloading, onChange: this.handleFormatChange, value: this.state.format },
+                React.createElement(
+                  "option",
+                  { value: "audio_only" },
+                  "Audio Only"
+                ),
+                React.createElement(
+                  "option",
+                  { value: "video_only" },
+                  "Video Only"
+                ),
+                React.createElement(
+                  "option",
+                  { value: "both" },
+                  "Audio + Video"
+                )
+              )
+            )
+          ),
           React.createElement(
             "div",
             { className: "control is-expanded" },
-            React.createElement("input", { className: "input", disabled: this.state.downloading, type: "text", placeholder: "Video URL", onChange: this.handleURLChange, value: this.state.url })
+            React.createElement("input", { className: "input", disabled: this.state.downloading, type: "text", placeholder: "Source URL", onChange: this.handleURLChange, value: this.state.url })
           ),
           React.createElement(
             "div",

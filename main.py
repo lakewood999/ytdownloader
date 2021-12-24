@@ -19,6 +19,9 @@ def check_id(id):
             return False
     return True
 
+# constants
+DL_FORMATS = ["audio_only", "video_only", "both"]
+
 
 @app.route("/")
 def home():
@@ -29,16 +32,25 @@ def home():
 def download_req():
     # get data from request
     req_body = request.get_json()
+    # url
     if "url" not in req_body:
-        return jsonify({"message": "Error: URL not provided!"})
+        return jsonify({"state":"error", "message": "Error: URL not provided!"})
     req_url = req_body["url"]
 
+    # format: must be video or audio
+    if "format" not in req_body:
+        return jsonify({"state":"error", "message": "Error: Format not found"})
+    req_format = req_body["format"]
+    if req_format not in DL_FORMATS:
+        return jsonify({"state":"error", "message": "Error: Invalid download format requested"})
+
     # convert url to job id
-    job_id = md5(req_url.encode("ascii")).hexdigest()
+    job_id = md5((req_url+"-"+req_format).encode("ascii")).hexdigest()
 
     # start request if it's not already complete
     if not redis.exists(job_id) and redis.hmget(job_id, ["state"])[0] != "done":
-        download_request.delay(req_url)
+        download_request.delay(req_url, req_format)
+    
     return jsonify({"state": "success", "id": job_id})
 
 
@@ -53,22 +65,30 @@ def download_status():
     # get status from redis
     if not redis.exists(job_id):
         return jsonify({"message": "Error: ID not found."})
-    status = redis.hmget(job_id, ["state", "eta", "percent"])
+    status = redis.hmget(job_id, ["state", "eta", "percent", "message"])
+    if status[3] == None:
+        status[3] = ""
+    else:
+        status[3] = status[3].decode("utf-8")
 
     # format and send results
     return jsonify(
-        {"state": status[0].decode("utf-8"), "percent": status[2].decode("utf-8").strip()}
+        {
+            "state": status[0].decode("utf-8"),
+            "percent": status[2].decode("utf-8").strip(),
+            "message": status[3],
+        }
     )
 
 
-@app.route("/api/job/download/<job_id>")
-def download_file(job_id):
+@app.route("/api/job/download/<job_id>/<dl_format>")
+def download_file(job_id, dl_format):
     # check id
-    if len(job_id) == 32 and check_id(job_id):
+    if len(job_id) == 32 and check_id(job_id) and dl_format in DL_FORMATS:
         # make sure we have a folder with files
         if job_id not in listdir(app.root_path + "/tmp"):
             abort(404)
-        files = listdir(app.root_path + "/tmp/" + job_id + "/")
+        files = listdir(app.root_path + "/tmp/" + job_id)
         if len(files) == 0:
             abort(404)
 
