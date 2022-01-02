@@ -4,6 +4,9 @@
 # of configurable options, please see the documentation for +omnibus/config.rb+.
 #
 
+# Disable timestamp for versions
+append_timestamp false
+
 # Build internally
 # ------------------------------
 # By default, Omnibus uses system folders (like +/var+ and +/opt+) to build and
@@ -13,7 +16,7 @@
 #
 # Uncomment this line to change the default base directory to "local"
 # -------------------------------------------------------------------
-#base_dir './local'
+base_dir './local'
 #
 # Alternatively you can tune the individual values
 # ------------------------------------------------
@@ -46,7 +49,7 @@ package_tmp   './local/omnibus/pkg-tmp'
 
 # Load additional software
 # ------------------------------
-software_gems ['omnibus-software']
+# software_gems ['omnibus-software']
 # local_software_dirs ['/path/to/local/software']
 
 # Windows architecture defaults

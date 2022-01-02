@@ -1,5 +1,5 @@
 #
-# Copyright 2021 YOUR NAME
+# Copyright 2021 Steven Su
 #
 # All Rights Reserved.
 #
@@ -19,7 +19,15 @@ build_iteration 1
 dependency "preparation"
 
 # ytdownloader dependencies/components
+dependency "redis"
 dependency "python3"
+dependency "pipenv"
+dependency "ytdownloader_app"
+#dependency "ruby"
+#dependency "chef-gem"
+#dependency "omnibus-ctl"
+#dependency "runit"
+dependency "ytdownloader-ctl"
 
 exclude "**/.git"
 exclude "**/bundler/git"

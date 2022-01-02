@@ -1,7 +1,8 @@
 redis/redis-stable/*
 redis/redis-stable.tar.gz
 tmp/*
-.venv/*
+.venv/
+.vscode/
 __pycache__/*
 node_modules
 omnibus/local

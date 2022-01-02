@@ -1,12 +1,11 @@
 name "python3"
 default_version "3.8.10"
 
-#license "Python-3.0"
-#license_file "LICENSE"
+license "Python-3.0"
+license_file "LICENSE"
 skip_transitive_dependency_licensing true
 
-#dependency 
-
+# Dependencies for python3 
 dependency "ncurses"
 dependency "zlib"
 dependency "openssl"
