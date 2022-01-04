@@ -12,3 +12,6 @@ To build the JSX scripts, run `npx babel --watch react_src/ --out-dir static/js/
 1. The redis instance needs to be started service. The celery workers depend on the instance to work. From this directory, run `./redis/bin/redis-server` to start the server.
 2. The celery workers then need to be started, as the web service depends on these workers being available. Run `pipenv run celery -A tasks worker --loglevel=INFO`
 3. Finally, the web service can be started. Run `pipenv run gunicorn --bind 0.0.0.0:[PORT] --reload main:app`
+
+## Deploying
+This project will be made available through two options: Docker containers and .deb files for Debian-based systems. Currently, initial Docker containers have been made. So, `git clone` this project into your intended run directory, install `docker` and `docker-compose`, and run `sudo docker-compose up` in this directory.
