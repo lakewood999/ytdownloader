@@ -1,0 +1,27 @@
+version: "3.8"
+services:
+  web:
+    #image: registry.hub.docker.com/lakewood999/ytdownloader:web_0.3.1-beta
+    build:
+      context: ./
+      dockerfile: Dockerfile.web
+    depends_on:
+      - redis
+      - celery
+    ports:
+      - "5000:80"
+    volumes:
+      - download:/opt/ytdownloader/tmp
+  celery:
+    #image: registry.hub.docker.com/lakewood999/ytdownloader:celery_0.3.1-beta
+    build:
+      context: ./
+      dockerfile: Dockerfile.celery
+    depends_on:
+      - redis
+    volumes:
+      - download:/opt/ytdownloader/tmp
+  redis:
+    image: redis
+volumes:
+  download: {}

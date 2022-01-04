@@ -9,7 +9,7 @@ from tasks import download_request
 app = Flask(__name__)
 
 # initialize redis connection
-redis = redis.Redis(host="localhost", port="6379")
+redis = redis.Redis(host="redis", port="6379")
 
 
 # quick and dirty check, can be replaced by regex

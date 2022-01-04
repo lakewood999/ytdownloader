@@ -7,10 +7,10 @@ import redis
 from hashlib import md5
 
 # initialize redis connection
-redis = redis.Redis(host="localhost", port="6379")
+redis = redis.Redis(host="redis", port="6379")
 
 # define celery app
-app = Celery("tasks", broker="redis://localhost")
+app = Celery("tasks", broker="redis://redis")
 
 
 # utilities for youtube_dl
