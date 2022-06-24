@@ -1,7 +1,5 @@
 FROM ubuntu:20.04
 
-# version 0.3.1-beta
-
 # Install basic dependencies
 RUN apt update && apt upgrade -y
 RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt-get -y install tzdata
