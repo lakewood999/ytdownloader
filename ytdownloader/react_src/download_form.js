@@ -62,7 +62,7 @@ class DownloadStatusBox extends React.Component {
 class DownloadForm extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { downloading: false, url: "", interval: null, jobid: "", state: 0, format: "audio_only", message: "", error_retry: 0 };
+    this.state = { downloading: false, url: "", interval: null, jobid: "", state: 0, format: "audio_only", message: "", error_retry: 0, percent: "0%" };
 
     this.handleURLChange = this.handleURLChange.bind(this);
     this.handleFormatChange = this.handleFormatChange.bind(this);
@@ -87,7 +87,7 @@ class DownloadForm extends React.Component {
   }
 
   restart() {
-    this.setState({ downloading: false, url: "", interval: null, jobid: "", state: 0 })
+    this.setState({ downloading: false, url: "", interval: null, jobid: "", state: 0, percent: "0%", error_retry: 0, message: "" });
   }
 
   makeRequest() {
@@ -102,7 +102,9 @@ class DownloadForm extends React.Component {
     }).then(response => response.json())
       .then((data) => {
         if (data.state === "success") {
-          this.setState({ state: 1, downloading: true, interval: setInterval(this.checkStatus, 500), jobid: data.id, percent: "0%", error_retry: 0 });
+          setTimeout( () => {
+            this.setState({ state: 1, downloading: true, interval: setInterval(this.checkStatus, 500), jobid: data.id, percent: "0%", error_retry: 0 });
+          }, 1000)
         } else {
           this.setState({ state: -1, interval: null, message: data.message });
         }

@@ -126,7 +126,7 @@ var DownloadForm = function (_React$Component3) {
 
     var _this4 = _possibleConstructorReturn(this, (DownloadForm.__proto__ || Object.getPrototypeOf(DownloadForm)).call(this, props));
 
-    _this4.state = { downloading: false, url: "", interval: null, jobid: "", state: 0, format: "audio_only", message: "", error_retry: 0 };
+    _this4.state = { downloading: false, url: "", interval: null, jobid: "", state: 0, format: "audio_only", message: "", error_retry: 0, percent: "0%" };
 
     _this4.handleURLChange = _this4.handleURLChange.bind(_this4);
     _this4.handleFormatChange = _this4.handleFormatChange.bind(_this4);
@@ -157,7 +157,7 @@ var DownloadForm = function (_React$Component3) {
   }, {
     key: "restart",
     value: function restart() {
-      this.setState({ downloading: false, url: "", interval: null, jobid: "", state: 0 });
+      this.setState({ downloading: false, url: "", interval: null, jobid: "", state: 0, percent: "0%", error_retry: 0, message: "" });
     }
   }, {
     key: "makeRequest",
@@ -176,7 +176,9 @@ var DownloadForm = function (_React$Component3) {
         return response.json();
       }).then(function (data) {
         if (data.state === "success") {
-          _this5.setState({ state: 1, downloading: true, interval: setInterval(_this5.checkStatus, 500), jobid: data.id, percent: "0%", error_retry: 0 });
+          setTimeout(function () {
+            _this5.setState({ state: 1, downloading: true, interval: setInterval(_this5.checkStatus, 500), jobid: data.id, percent: "0%", error_retry: 0 });
+          }, 1000);
         } else {
           _this5.setState({ state: -1, interval: null, message: data.message });
         }
