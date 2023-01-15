@@ -84,7 +84,8 @@ def download_request(url, dl_format):
         "logger": MyLogger(),
         "progress_hooks": [progress_hook],
         "postprocessor_hooks": [post_hook],
-        "outtmpl": "%(title)s-%(id)s.%(ext)s",
+        #"outtmpl": "%(title)s-%(id)s.%(ext)s", # drop the title to prevent filename errors
+        "outtmpl": "%(id)s.%(ext)s",
         "paths": {"home": "tmp/"},
         "verbose": True,
     }

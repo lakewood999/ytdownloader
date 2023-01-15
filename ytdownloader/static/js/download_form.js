@@ -126,7 +126,7 @@ var DownloadForm = function (_React$Component3) {
 
     var _this4 = _possibleConstructorReturn(this, (DownloadForm.__proto__ || Object.getPrototypeOf(DownloadForm)).call(this, props));
 
-    _this4.state = { downloading: false, url: "", interval: null, jobid: "", state: 0, format: "audio_only", message: "" };
+    _this4.state = { downloading: false, url: "", interval: null, jobid: "", state: 0, format: "audio_only", message: "", error_retry: 0 };
 
     _this4.handleURLChange = _this4.handleURLChange.bind(_this4);
     _this4.handleFormatChange = _this4.handleFormatChange.bind(_this4);
@@ -176,9 +176,16 @@ var DownloadForm = function (_React$Component3) {
         return response.json();
       }).then(function (data) {
         if (data.state === "success") {
-          _this5.setState({ state: 1, downloading: true, interval: setInterval(_this5.checkStatus, 500), jobid: data.id, percent: "0%" });
+          _this5.setState({ state: 1, downloading: true, interval: setInterval(_this5.checkStatus, 500), jobid: data.id, percent: "0%", error_retry: 0 });
         } else {
           _this5.setState({ state: -1, interval: null, message: data.message });
+        }
+      }, function (error) {
+        if (_this5.state.error_retry < 3) {
+          _this5.setState({ error_retry: _this5.state.error_retry + 1 });
+          _this5.makeRequest();
+        } else {
+          _this5.setState({ state: -1, interval: null, message: "Error: " + error });
         }
       });
     }
@@ -202,15 +209,25 @@ var DownloadForm = function (_React$Component3) {
       }).then(function (data) {
         console.log(data);
         if (data.state === "downloading" && _this6.state.state !== 2) {
-          _this6.setState({ state: 2, percent: data.percent });
+          _this6.setState({ state: 2, percent: data.percent, error_retry: 0 });
         } else if (data.state === "downloading" && _this6.state.state === 2) {
-          _this6.setState({ percent: data.percent });
+          _this6.setState({ percent: data.percent, error_retry: 0 });
         } else if (data.state === "processing" && _this6.state.state !== 3) {
-          _this6.setState({ state: 3, percent: "100%" });
+          _this6.setState({ state: 3, percent: "100%", error_retry: 0 });
         } else if (data.state === "done" && _this6.state.state !== 4) {
-          _this6.setState({ state: 4, interval: clearInterval(_this6.state.interval), percent: "100%" });
+          _this6.setState({ state: 4, interval: clearInterval(_this6.state.interval), percent: "100%", error_retry: 0 });
         } else if (data.state === "error") {
-          _this6.setState({ state: -1, interval: null, message: data.message });
+          if (_this6.state.error_retry > 5) {
+            _this6.setState({ state: -1, interval: clearInterval(_this6.state.interval), message: data.message, error_retry: 0 });
+          } else {
+            _this6.setState({ error_retry: _this6.state.error_retry + 1 });
+          }
+        }
+      }, function (error) {
+        if (_this6.state.error_retry > 5) {
+          _this6.setState({ state: -1, interval: clearInterval(_this6.state.interval), message: "Error: " + error, error_retry: 0 });
+        } else {
+          _this6.setState({ error_retry: _this6.state.error_retry + 1 });
         }
       });
     }

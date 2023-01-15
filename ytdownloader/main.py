@@ -69,12 +69,12 @@ def download_status():
     # process input
     req_body = request.get_json()
     if "id" not in req_body:
-        return jsonify({"message": "Error: invalid request. Missing job ID."})
+        return jsonify({"state": "error", "message": "Error: invalid request. Missing job ID."})
     job_id = req_body["id"]
 
     # get status from redis
     if not redis.exists(job_id):
-        return jsonify({"message": "Error: ID not found."})
+        return jsonify({"state":"error", "message": "Error: ID not found."})
     status = redis.hmget(job_id, ["state", "eta", "percent", "message"])
     if status[3] == None:
         status[3] = ""

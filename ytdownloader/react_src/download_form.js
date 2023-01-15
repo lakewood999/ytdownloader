@@ -62,7 +62,7 @@ class DownloadStatusBox extends React.Component {
 class DownloadForm extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { downloading: false, url: "", interval: null, jobid: "", state: 0, format: "audio_only", message: "" };
+    this.state = { downloading: false, url: "", interval: null, jobid: "", state: 0, format: "audio_only", message: "", error_retry: 0 };
 
     this.handleURLChange = this.handleURLChange.bind(this);
     this.handleFormatChange = this.handleFormatChange.bind(this);
@@ -100,11 +100,19 @@ class DownloadForm extends React.Component {
       },
       body: JSON.stringify({ "url": this.state.url, "format": this.state.format }),
     }).then(response => response.json())
-      .then(data => {
+      .then((data) => {
         if (data.state === "success") {
-          this.setState({ state: 1, downloading: true, interval: setInterval(this.checkStatus, 500), jobid: data.id, percent: "0%" });
+          this.setState({ state: 1, downloading: true, interval: setInterval(this.checkStatus, 500), jobid: data.id, percent: "0%", error_retry: 0 });
         } else {
           this.setState({ state: -1, interval: null, message: data.message });
+        }
+      },
+      (error) => {
+        if (this.state.error_retry < 3) {
+          this.setState({ error_retry: this.state.error_retry + 1 });
+          this.makeRequest();
+        } else {
+          this.setState({ state: -1, interval: null, message: "Error: " + error });
         }
       });
   }
@@ -121,18 +129,29 @@ class DownloadForm extends React.Component {
       },
       body: JSON.stringify({ "id": this.state.jobid }),
     }).then(response => response.json())
-      .then(data => {
+      .then((data) => {
         console.log(data);
         if (data.state === "downloading" && this.state.state !== 2) {
-          this.setState({ state: 2, percent: data.percent })
+          this.setState({ state: 2, percent: data.percent, error_retry: 0 })
         } else if (data.state === "downloading" && this.state.state === 2) {
-          this.setState({ percent: data.percent })
+          this.setState({ percent: data.percent, error_retry: 0 })
         } else if (data.state === "processing" && this.state.state !== 3) {
-          this.setState({ state: 3, percent: "100%" })
+          this.setState({ state: 3, percent: "100%", error_retry: 0 })
         } else if ((data.state === "done" && this.state.state !== 4)) {
-          this.setState({ state: 4, interval: clearInterval(this.state.interval), percent: "100%" })
+          this.setState({ state: 4, interval: clearInterval(this.state.interval), percent: "100%", error_retry: 0 })
         } else if (data.state === "error") {
-          this.setState({ state: -1, interval: null, message: data.message });
+          if (this.state.error_retry > 5) {
+            this.setState({ state: -1, interval: clearInterval(this.state.interval), message: data.message, error_retry: 0 });
+          } else {
+            this.setState({ error_retry: this.state.error_retry + 1 });
+          }
+        }
+      },
+      (error) => {
+        if (this.state.error_retry > 5) {
+          this.setState({ state: -1, interval: clearInterval(this.state.interval), message: "Error: " + error, error_retry: 0 });
+        } else {
+          this.setState({ error_retry: this.state.error_retry + 1 });
         }
       });
   }
