@@ -111,7 +111,7 @@ def download_file(job_id, dl_format):
             app.root_path + "/tmp/" + job_id,
             files[0],
             as_attachment=True,
-            cache_timeout=0,
+            max_age=0,
         )
 
     # invalid id is an invalid request
