@@ -7,9 +7,7 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
 
 You should have received a copy of the GNU Affero General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 */
-
-'use strict';
-const e = React.createElement;
+import React from 'react';
 
 class StatusLine extends React.Component {
   constructor(props) {
@@ -216,5 +214,4 @@ class DownloadForm extends React.Component {
   }
 }
 
-const domContainer = document.querySelector('#download_form');
-ReactDOM.render(e(DownloadForm), domContainer);
+export default DownloadForm;
