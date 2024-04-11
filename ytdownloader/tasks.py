@@ -7,20 +7,14 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
 
 You should have received a copy of the GNU Affero General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 """
-
-from __future__ import unicode_literals
-import yt_dlp as ytdl
-
 from celery import Celery
 import redis
-
-from hashlib import md5
 
 # initialize redis connection
 redis = redis.Redis(host="redis", port="6379")
 
 # define celery app
-app = Celery("tasks", broker="redis://redis")
+app = Celery("tasks", broker="redis://redis", broker_connection_retry_on_startup=True)
 
 
 # utilities for youtube_dl
@@ -77,6 +71,9 @@ def post_hook(d):
 # Main task definition
 @app.task
 def download_request(url, dl_format):
+    from hashlib import md5
+    import yt_dlp as ytdl
+    
     # config for youtube download
     ydl_opts = {
         "format": "bestvideo+bestaudio",
