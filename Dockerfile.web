@@ -19,8 +19,7 @@ RUN PROD_BUILD=true npm run build
 ### BUILD STEP: python packages
 FROM python:3.12-slim-bookworm AS python
 RUN apt-get -y update && apt-get install -y curl && curl -sSL https://install.python-poetry.org | python3 -
-COPY ytdownloader/poetry.lock .
-COPY ytdownloader/pyproject.toml .
+COPY ytdownloader/poetry.lock ytdownloader/pyproject.toml ./
 RUN /root/.local/bin/poetry export --without-hashes --format=requirements.txt --with web > requirements.txt
 
 ### FINAL STEP
@@ -32,11 +31,9 @@ RUN python3 -m pip install --user --no-cache-dir -r requirements.txt
 # Copy application
 WORKDIR /opt/ytdownloader
 
-COPY ytdownloader/static /opt/ytdownloader/static
-COPY ytdownloader/templates /opt/ytdownloader/templates
-COPY ytdownloader/main.py /opt/ytdownloader/main.py
-COPY ytdownloader/tasks.py /opt/ytdownloader/tasks.py
-
+COPY ytdownloader/static ./static
+COPY ytdownloader/templates ./templates
+COPY ytdownloader/main.py ytdownloader/tasks.py ./ 
 # Copy React build files
 COPY --from=webpack /ytdownloader/static/js/ /opt/ytdownloader/static/js/
 
