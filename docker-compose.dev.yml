@@ -4,7 +4,7 @@ services:
       context: ./
       dockerfile: Dockerfile.web
       args:
-        PROD_BUILD: true
+        PROD_BUILD: false
     restart: unless-stopped
     depends_on:
       - redis
@@ -13,6 +13,9 @@ services:
       - "5000:80"
     volumes:
       - download:/opt/ytdownloader/tmp
+      - ./ytdownloader/static/dist:/opt/ytdownloader/ytdownloader/static/dist:ro
+      - ./ytdownloader/templates:/opt/ytdownloader/ytdownloader/templates:ro
+      - ./ytdownloader/main.py:/opt/ytdownloader/ytdownloader/main.py:ro
   celery:
     build:
       context: ./

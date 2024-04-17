@@ -7,164 +7,158 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
 
 You should have received a copy of the GNU Affero General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 */
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import DownloadStatusBox from './DownloadStatusBox';
 
-class DownloadForm extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = { downloading: false, url: "", interval: null, jobid: "", state: 0, format: "audio_only", message: "", error_retry: 0, percent: "0%" };
+const DownloadForm = () => {
+    const [downloading, setDownloading] = useState(false);
+    const [url, setURL] = useState("");
+    const [state, setState] = useState(0);
+    const [format, setFormat] = useState("audio_only");
+    const [message, setMessage] = useState("");
+    const [error_retry, setErrorRetry] = useState(0);
+    const [percent, setPercent] = useState("0%");
+    const [jobid, setJobID] = useState("");
+    const [downloadId, setDownloadId] = useState("");
 
-        this.handleURLChange = this.handleURLChange.bind(this);
-        this.handleFormatChange = this.handleFormatChange.bind(this);
-        this.handleSubmit = this.handleSubmit.bind(this);
-        this.makeRequest = this.makeRequest.bind(this);
-        this.checkStatus = this.checkStatus.bind(this);
-        this.restart = this.restart.bind(this);
+    const restart = () => {
+        setDownloading(false);
+        setURL("");
+        setJobID("");
+        setState(0);
+        setPercent("0%");
+        setMessage("");
+        setErrorRetry(0);
     }
 
-    handleURLChange(event) {
-        this.setState({ url: event.target.value })
-    }
-
-    handleFormatChange(event) {
-        this.setState({ format: event.target.value });
-        console.log(event.target.value);
-    }
-
-    handleSubmit(event) {
-        this.makeRequest();
-        event.preventDefault();
-    }
-
-    restart() {
-        this.setState({ downloading: false, url: "", interval: null, jobid: "", state: 0, percent: "0%", error_retry: 0, message: "" });
-    }
-
-    makeRequest() {
-        this.setState({ downloading: true })
+    const makeRequest = () => {
+        setDownloading(true);
         fetch('/api/job/request', {
             method: "POST",
             mode: "cors",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ "url": this.state.url, "format": this.state.format }),
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ "url": url, "format": format }),
         }).then(response => response.json())
             .then((data) => {
                 if (data.state === "success") {
-                    setTimeout(() => {
-                        this.setState({ state: 1, downloading: true, interval: setInterval(this.checkStatus, 500), jobid: data.id, percent: "0%", error_retry: 0 });
-                    }, 1000)
+                    setState(1); setDownloading(true);
+                    setJobID(data.id); setPercent("0%"); setErrorRetry(0);
+                    setDownloadId(data.id);
                 } else {
-                    this.setState({ state: -1, interval: null, message: data.message });
+                    setJobID(""); setState(-1); setMessage(data.message);
                 }
             },
                 (error) => {
-                    if (this.state.error_retry < 3) {
-                        this.setState({ error_retry: this.state.error_retry + 1 });
-                        this.makeRequest();
+                    if (error_retry < 3) {
+                        setErrorRetry(error_retry + 1);
+                        makeRequest();
                     } else {
-                        this.setState({ state: -1, interval: null, message: "Error: " + error });
+                        setJobID(""); setState(-1); setMessage("Error: " + error);
                     }
                 });
     }
-
-    checkStatus() {
-        if (this.state.jobid === null) {
+    // TODO: figure out how to handle jobid and the effect and the download need
+    const checkStatus = () => {
+        console.log("status update called");
+        if (jobid === null) {
             return;
         }
         fetch('/api/job/status', {
             method: "POST",
             mode: "cors",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ "id": this.state.jobid }),
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ "id": jobid }),
         }).then(response => response.json())
             .then((data) => {
-                console.log(data);
-                if (data.state === "downloading" && this.state.state !== 2) {
-                    this.setState({ state: 2, percent: data.percent, error_retry: 0 })
-                } else if (data.state === "downloading" && this.state.state === 2) {
-                    this.setState({ percent: data.percent, error_retry: 0 })
-                } else if (data.state === "processing" && this.state.state !== 3) {
-                    this.setState({ state: 3, percent: "100%", error_retry: 0 })
-                } else if ((data.state === "done" && this.state.state !== 4)) {
-                    this.setState({ state: 4, interval: clearInterval(this.state.interval), percent: "100%", error_retry: 0 })
+                if (data.state === "downloading" && state !== 2) {
+                    setState(2); setPercent(data.percent); setErrorRetry(0);
+                } else if (data.state === "downloading" && state === 2) {
+                    setPercent(data.percent); setErrorRetry(0);
+                } else if (data.state === "processing" && state !== 3) {
+                    setState(3); setPercent("100%"); setErrorRetry(0);
+                } else if ((data.state === "done" && state !== 4)) {
+                    // NOTE: in the future, we might want to set downloadId here
+                    setState(4); setPercent("100%"); setErrorRetry(0); setJobID("");
                 } else if (data.state === "error") {
-                    if (this.state.error_retry > 5) {
-                        this.setState({ state: -1, interval: clearInterval(this.state.interval), message: data.message, error_retry: 0 });
+                    if (error_retry > 5) {
+                        setJobID(""); setState(-1); setMessage(data.message); setErrorRetry(0);
                     } else {
-                        this.setState({ error_retry: this.state.error_retry + 1 });
+                        setErrorRetry(error_retry + 1);
                     }
                 }
             },
                 (error) => {
-                    if (this.state.error_retry > 5) {
-                        this.setState({ state: -1, interval: clearInterval(this.state.interval), message: "Error: " + error, error_retry: 0 });
+                    if (error_retry > 5) {
+                        setJobID(""); setState(-1); setMessage("Error: " + error); setErrorRetry(0);
                     } else {
-                        this.setState({ error_retry: this.state.error_retry + 1 });
+                        setErrorRetry(error_retry + 1);
                     }
                 });
     }
 
-    render() {
-        var downloadBox, downloadStatus;
-        var downloadButton = null;
-        if (this.state.downloading) {
-            var steps = [
-                { "number": 1, "text": "Queue download request", "suffix": "", "stateLoading": 1, "stateDone": 2 },
-                { "number": 2, "text": "Video downloading on server", "suffix": "(" + this.state.percent + ")", "stateLoading": 2, "stateDone": 3 },
-                { "number": 3, "text": "Post-processing and conversion", "suffix": "", "stateLoading": 3, "stateDone": 4 },
-                { "number": 4, "text": "Read to download", "suffix": "", "stateLoading": 4, "stateDone": 4 }
-            ];
-            downloadStatus = <DownloadStatusBox state={this.state.state} steps={steps} error_code={this.state.message} />;
+    // effect to check status
+    useEffect(() => {
+        if (jobid === "") {
+            return;
+        }
+        const interval = setInterval(() => {
+            checkStatus();
+        }, 500);
+        return () => clearInterval(interval);
+    }, [jobid, error_retry, state]);
 
-            if (this.state.state === 4) {
-                downloadButton = <div className="field is-grouped mt-1">
-                    <p className="control"><a className="button is-info" download href={"/api/job/download/" + this.state.jobid + "/" + this.state.format}>Download</a></p>
-                    <p className="control"><input className="button is-info" value="Reset" type="reset" /></p>
-                </div>;
-            } else if (this.state.state === -1) {
-                downloadButton = <div className="field is-grouped mt-1">
-                    <p className="control"><input className="button is-info" value="Reset" type="reset" /></p>
-                </div>;
-            }
+    let downloadStatus;
+    let downloadButton = null;
+    if (downloading) {
+        var steps = [
+            { "number": 1, "text": "Queue download request", "suffix": "", "stateLoading": 1, "stateDone": 2 },
+            { "number": 2, "text": "Video downloading on server", "suffix": "(" + percent + ")", "stateLoading": 2, "stateDone": 3 },
+            { "number": 3, "text": "Post-processing and conversion", "suffix": "", "stateLoading": 3, "stateDone": 4 },
+            { "number": 4, "text": "Read to download", "suffix": "", "stateLoading": 4, "stateDone": 4 }
+        ];
+        downloadStatus = <DownloadStatusBox state={state} steps={steps} error_code={message} />;
 
-            downloadBox = <div className="">
+        if (state === 4) {
+            downloadButton = <div className="field is-grouped mt-1">
+                <p className="control"><a className="button is-info" download href={`/api/job/download/${downloadId}/${format}`}>Download</a></p>
+                <p className="control"><input className="button is-info" value="Reset" type="reset" /></p>
+            </div>;
+        } else if (state === -1) {
+            downloadButton = <div className="field is-grouped mt-1">
+                <p className="control"><input className="button is-info" value="Reset" type="reset" /></p>
+            </div>;
+        }
+    }
+
+    return (
+        <form onSubmit={(e) => { e.preventDefault(); makeRequest() }} onReset={restart}>
+            <div className="field has-addons has-addons-centered">
+                <div className="control">
+                    <span className="select">
+                        <select disabled={downloading} onChange={(e) => setFormat(e.target.value)} value={format}>
+                            <option value="audio_only">Audio Only</option>
+                            <option value="video_only">Video Only</option>
+                            <option value="both">Audio + Video</option>
+                        </select>
+                    </span>
+                </div>
+                <div className="control is-expanded">
+                    <input className="input" required disabled={downloading} type="text" placeholder="Source URL" onChange={(e) => setURL(e.target.value)} value={url} />
+                </div>
+                <div className="control">
+                    <button disabled={downloading} className="button is-info">
+                        Download
+                    </button>
+                </div>
+            </div>
+            <div className="">
                 <div className="container">
                     {downloadStatus}
                 </div>
                 {downloadButton}
-            </div>;
-        }
-
-        return (
-            <form onSubmit={this.handleSubmit} onReset={this.restart}>
-                <div className="field has-addons has-addons-centered">
-                    <div className="control">
-                        <span className="select">
-                            <select disabled={this.state.downloading} onChange={this.handleFormatChange} value={this.state.format}>
-                                <option value="audio_only">Audio Only</option>
-                                <option value="video_only">Video Only</option>
-                                <option value="both">Audio + Video</option>
-                            </select>
-                        </span>
-                    </div>
-                    <div className="control is-expanded">
-                        <input className="input" disabled={this.state.downloading} type="text" placeholder="Source URL" onChange={this.handleURLChange} value={this.state.url} />
-                    </div>
-                    <div className="control">
-                        <button disabled={this.state.downloading} className="button is-info">
-                            Download
-                        </button>
-                    </div>
-                </div>
-                {downloadBox}
-            </form>
-        );
-    }
+            </div>
+        </form>
+    );
 }
 
 export default DownloadForm;
