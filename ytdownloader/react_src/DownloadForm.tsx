@@ -57,9 +57,8 @@ const DownloadForm = () => {
                     }
                 });
     }
-    // TODO: figure out how to handle jobid and the effect and the download need
+
     const checkStatus = () => {
-        console.log("status update called");
         if (jobid === null) {
             return;
         }
