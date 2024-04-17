@@ -4,7 +4,7 @@ services:
       context: ./
       dockerfile: Dockerfile.web
       args:
-        PROD_BUILD: false
+        PROD_BUILD: "false"
     restart: unless-stopped
     depends_on:
       - redis
