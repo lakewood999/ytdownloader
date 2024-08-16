@@ -15,12 +15,13 @@ from flask.helpers import send_from_directory
 import redis
 import string
 from tasks import download_request
+from os import environ
+from requests import post
 
 app = Flask(__name__)
 
 # initialize redis connection
 redis = redis.Redis(host="redis", port="6379")
-
 
 # quick and dirty check, can be replaced by regex
 def check_id(id):
@@ -32,11 +33,23 @@ def check_id(id):
 # constants
 DL_FORMATS = ["audio_only", "video_only", "both"]
 
+def validate_recaptcha(code, ip):
+    print("environ", environ.get('RECAPTCHA_SECRET'))
+    data = {
+        'secret': environ.get('RECAPTCHA_SECRET'),
+        'response': code,
+        'remoteip': ip
+    }
+    r = post('https://www.google.com/recaptcha/api/siteverify', data=data)
+    r_json = r.json()
+    if r_json['success']:
+        return True, []
+    else:
+        return r_json['success'], r_json['error-codes']
 
 @app.route("/")
 def home():
     return render_template("index.html")
-
 
 @app.route("/api/job/request", methods=["POST"])
 def download_req():
@@ -46,6 +59,13 @@ def download_req():
     if "url" not in req_body:
         return jsonify({"state":"error", "message": "Error: URL not provided!"})
     req_url = req_body["url"]
+    if 'recaptcha' in req_body:
+        result, codes = validate_recaptcha(req_body['recaptcha'], request.remote_addr)
+        if not result:
+            print("codes", codes)
+            return jsonify({"state":"error", "message": f"Error: Invalid reCAPTCHA with error code {codes}. DEBUG: {req_body['recaptcha']}, {environ.get('RECAPTCHA_SECRET')}"})
+    else:
+        return jsonify({"state":"error", "message": "Error: reCAPTCHA not provided!"})
 
     # format: must be video or audio
     if "format" not in req_body:

@@ -7,8 +7,9 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
 
 You should have received a copy of the GNU Affero General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import DownloadStatusBox from './DownloadStatusBox';
+import Reaptcha from 'reaptcha';
 
 const DownloadForm = () => {
     const [downloading, setDownloading] = useState(false);
@@ -20,6 +21,8 @@ const DownloadForm = () => {
     const [percent, setPercent] = useState("0%");
     const [jobid, setJobID] = useState("");
     const [downloadId, setDownloadId] = useState("");
+    const [recaptcha, setRecaptcha] = useState("");
+    const recaptchaRef = useRef<Reaptcha>(null);
 
     const restart = () => {
         setDownloading(false);
@@ -29,15 +32,28 @@ const DownloadForm = () => {
         setPercent("0%");
         setMessage("");
         setErrorRetry(0);
+        setRecaptcha("");
+        recaptchaRef.current!.reset();
     }
 
-    const makeRequest = () => {
+    const handleSubmit = (event: React.FormEvent) => {
+        event.preventDefault();
         setDownloading(true);
+        recaptchaRef.current!.execute();
+    }
+
+    const onVerify = (reCaptchaResponse: string) => {
+        setRecaptcha(reCaptchaResponse);
+        console.log(reCaptchaResponse);
+        makeRequest(reCaptchaResponse);
+    }
+
+    const makeRequest = (token: string) => {
         fetch('/api/job/request', {
             method: "POST",
             mode: "cors",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ "url": url, "format": format }),
+            body: JSON.stringify({ "url": url, "format": format, "recaptcha": token }),
         }).then(response => response.json())
             .then((data) => {
                 if (data.state === "success") {
@@ -51,7 +67,7 @@ const DownloadForm = () => {
                 (error) => {
                     if (error_retry < 3) {
                         setErrorRetry(error_retry + 1);
-                        makeRequest();
+                        makeRequest(token);
                     } else {
                         setJobID(""); setState(-1); setMessage("Error: " + error);
                     }
@@ -130,7 +146,7 @@ const DownloadForm = () => {
     }
 
     return (
-        <form onSubmit={(e) => { e.preventDefault(); makeRequest() }} onReset={restart}>
+        <form onSubmit={(e) => { handleSubmit(e) }} onReset={restart}>
             <div className="field has-addons has-addons-centered">
                 <div className="control">
                     <span className="select">
@@ -156,6 +172,12 @@ const DownloadForm = () => {
                 </div>
                 {downloadButton}
             </div>
+            <Reaptcha
+                sitekey="6LeLwa4UAAAAAC_thqr9XaTPOMeyUFJIasdZfA7X"
+                size="invisible"
+                onVerify={onVerify}
+                ref={recaptchaRef}
+            />
         </form>
     );
 }
