@@ -14,6 +14,9 @@ convenience.
 
 ## Running
 
+*Note: the current recaptcha implementation uses a built-in public key but has a dynamic server key as defined in.env.template. This will be changed to support user-inputted
+key pairs.*
+
 ### Bare metal (not recommended)
 1. The redis instance needs to be started service. The celery workers depend on the instance to work. From this directory, run `./redis/bin/redis-server` to start the server. Note: inclusion of the binary here is deprecated and will not be included in future releases.
 2. The celery workers then need to be started, as the web service depends on these workers being available. Run `poetry run celery -A tasks worker --loglevel=INFO`
