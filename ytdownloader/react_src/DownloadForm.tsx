@@ -44,7 +44,6 @@ const DownloadForm = () => {
 
     const onVerify = (reCaptchaResponse: string) => {
         setRecaptcha(reCaptchaResponse);
-        console.log(reCaptchaResponse);
         makeRequest(reCaptchaResponse);
     }
 

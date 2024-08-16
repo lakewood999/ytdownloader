@@ -34,7 +34,6 @@ def check_id(id):
 DL_FORMATS = ["audio_only", "video_only", "both"]
 
 def validate_recaptcha(code, ip):
-    print("environ", environ.get('RECAPTCHA_SECRET'))
     data = {
         'secret': environ.get('RECAPTCHA_SECRET'),
         'response': code,
@@ -62,8 +61,7 @@ def download_req():
     if 'recaptcha' in req_body:
         result, codes = validate_recaptcha(req_body['recaptcha'], request.remote_addr)
         if not result:
-            print("codes", codes)
-            return jsonify({"state":"error", "message": f"Error: Invalid reCAPTCHA with error code {codes}. DEBUG: {req_body['recaptcha']}, {environ.get('RECAPTCHA_SECRET')}"})
+            return jsonify({"state":"error", "message": f"Error: Invalid reCAPTCHA with error code {codes}"})
     else:
         return jsonify({"state":"error", "message": "Error: reCAPTCHA not provided!"})
 
