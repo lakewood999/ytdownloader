@@ -76,7 +76,7 @@ def download_request(url, dl_format):
     
     # config for youtube download
     ydl_opts = {
-        "format": "bestvideo+bestaudio",
+        "format": "bestvideo*+bestaudio/best",
         "postprocessors": [],
         "logger": MyLogger(),
         "progress_hooks": [progress_hook],
